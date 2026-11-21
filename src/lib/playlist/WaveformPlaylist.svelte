@@ -41,25 +41,15 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import type { WaveformPlaylist as WaveformPlaylistInstance } from '@arraypress/waveform-playlist';
+	import type {
+		WaveformPlaylist as WaveformPlaylistInstance,
+		WaveformPlaylistOptions,
+	} from '@arraypress/waveform-playlist';
 	import type {
 		WaveformPlaylistCallbacks,
 		WaveformPlaylistProps,
 		WaveformPlaylistTrack,
 	} from './types.js';
-
-	/** Minimal structural view of the methods the wrapper calls. */
-	type PlaylistInstance = {
-		destroy?: () => void;
-		selectTrack?: (i: number) => void;
-		seekToChapter?: (t: number, s: number) => void;
-		nextTrack?: () => void;
-		previousTrack?: () => void;
-		getPlayer?: () => unknown;
-		getCurrentTrackIndex?: () => number;
-		getTracks?: () => WaveformPlaylistTrack[];
-	};
-	type PlaylistCtor = new (el: HTMLElement, opts: Record<string, unknown>) => PlaylistInstance;
 
 	/* Player options the playlist never passes to its player (`audioMode`,
 	 * `loop`, `showLoop`, `lazy`) and the per-track ones each `tracks` entry
@@ -182,7 +172,7 @@
 	}: Props = $props();
 
 	let container: HTMLDivElement;
-	let instance: PlaylistInstance | null = null;
+	let instance: WaveformPlaylistInstance | null = null;
 
 	/*
 	 * Host `class` handling.
@@ -333,12 +323,10 @@
 	}
 
 	function teardown() {
-		if (instance && typeof instance.destroy === 'function') {
-			try {
-				instance.destroy();
-			} catch (err) {
-				console.warn('[WaveformPlaylistSvelte] destroy() threw:', err);
-			}
+		try {
+			instance?.destroy();
+		} catch (err) {
+			console.warn('[WaveformPlaylistSvelte] destroy() threw:', err);
 		}
 		instance = null;
 	}
@@ -350,13 +338,6 @@
 		import('@arraypress/waveform-playlist')
 			.then((mod) => {
 				if (my !== token || !container) return;
-
-				const Ctor = (mod.default ??
-					(mod as { WaveformPlaylist?: unknown }).WaveformPlaylist) as PlaylistCtor;
-				if (typeof Ctor !== 'function') {
-					console.error('[WaveformPlaylistSvelte] Failed to resolve WaveformPlaylist constructor from module.');
-					return;
-				}
 
 				/* Wire callbacks. The playlist runs each after its own
 				 * handling, passing the core's arguments through. The lowercase
@@ -372,7 +353,7 @@
 				opts.onPreviousTrack = forward(() => onprevioustrack);
 
 				try {
-					instance = new Ctor(container, opts);
+					instance = new mod.default(container, opts as WaveformPlaylistOptions);
 				} catch (err) {
 					/* The most common cause is a missing core player —
 					 * `window.WaveformPlayer` must be present before the
@@ -407,28 +388,28 @@
 	/* Imperative API — reachable via `bind:this`. Thin pass-throughs;
 	 * calls before the async instance mounts are safe no-ops. */
 	export function selectTrack(index: number): void {
-		instance?.selectTrack?.(index);
+		instance?.selectTrack(index);
 	}
 	export function seekToChapter(trackIndex: number, time: number): void {
-		instance?.seekToChapter?.(trackIndex, time);
+		instance?.seekToChapter(trackIndex, time);
 	}
 	export function nextTrack(): void {
-		instance?.nextTrack?.();
+		instance?.nextTrack();
 	}
 	export function previousTrack(): void {
-		instance?.previousTrack?.();
+		instance?.previousTrack();
 	}
 	export function getPlayer(): unknown | null {
-		return instance?.getPlayer?.() ?? null;
+		return instance?.getPlayer() ?? null;
 	}
 	export function getCurrentTrackIndex(): number {
-		return instance?.getCurrentTrackIndex?.() ?? 0;
+		return instance?.getCurrentTrackIndex() ?? 0;
 	}
 	export function getTracks(): WaveformPlaylistTrack[] {
-		return instance?.getTracks?.() ?? [];
+		return instance?.getTracks() ?? [];
 	}
 	export function getInstance(): WaveformPlaylistInstance | null {
-		return instance as unknown as WaveformPlaylistInstance | null;
+		return instance;
 	}
 </script>
 

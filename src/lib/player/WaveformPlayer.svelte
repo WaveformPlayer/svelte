@@ -22,24 +22,8 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import type { WaveformPlayer as WaveformPlayerInstance } from '@arraypress/waveform-player';
+	import type { WaveformPlayer as WaveformPlayerInstance, WaveformPlayerOptions } from '@arraypress/waveform-player';
 	import type { WaveformPlayerCallbacks, WaveformPlayerProps } from './types.js';
-
-	/** Minimal structural view of the methods the wrapper calls. */
-	type PlayerInstance = {
-		destroy?: () => void;
-		play?: () => Promise<void> | undefined;
-		pause?: () => void;
-		togglePlay?: () => void;
-		seekTo?: (s: number) => void;
-		seekToPercent?: (p: number) => void;
-		setVolume?: (v: number) => void;
-		setPlaybackRate?: (r: number) => void;
-		setPlayingState?: (p: boolean) => void;
-		setProgress?: (c: number, d: number) => void;
-		loadTrack?: (u: string, t?: string, s?: string, o?: Record<string, unknown>) => Promise<void>;
-	};
-	type PlayerCtor = new (el: HTMLElement, opts: Record<string, unknown>) => PlayerInstance;
 
 	/* The lowercase callback props replace the host's same-named native
 	 * handlers (`onplay`, `onratechange`, `onvolumechange`, … are media
@@ -148,7 +132,7 @@
 	}: Props = $props();
 
 	let container: HTMLDivElement;
-	let instance: PlayerInstance | null = null;
+	let instance: WaveformPlayerInstance | null = null;
 
 	/*
 	 * Host `class` handling.
@@ -311,12 +295,10 @@
 	}
 
 	function teardown() {
-		if (instance && typeof instance.destroy === 'function') {
-			try {
-				instance.destroy();
-			} catch (err) {
-				console.warn('[WaveformPlayerSvelte] destroy() threw:', err);
-			}
+		try {
+			instance?.destroy();
+		} catch (err) {
+			console.warn('[WaveformPlayerSvelte] destroy() threw:', err);
 		}
 		instance = null;
 	}
@@ -331,19 +313,10 @@
 		 * its own ref and wants none of that — and as an island on a page that
 		 * *does* carry such markup (a CMS page, a WordPress template), the root
 		 * entry would silently mount players the Svelte app never asked for.
-		 * Same class, same options; the only thing it drops is the scan. Needs
-		 * core >= 1.27.0, which is why the peer floor is hard rather than
-		 * soft. */
+		 * Same class, same options; the only thing it drops is the scan. */
 		import('@arraypress/waveform-player/no-autoinit')
 			.then((mod) => {
 				if (my !== token || !container) return;
-
-				const Ctor = (mod.default ??
-					(mod as { WaveformPlayer?: unknown }).WaveformPlayer) as PlayerCtor;
-				if (typeof Ctor !== 'function') {
-					console.error('[WaveformPlayerSvelte] Failed to resolve WaveformPlayer constructor from module.');
-					return;
-				}
 
 				/* Wire callbacks. The lowercase props are reactive, so the
 				 * closures always reach the latest handler without a remount. */
@@ -354,7 +327,7 @@
 				opts.onTimeUpdate = (c: number, d: number, i: WaveformPlayerInstance) => ontimeupdate?.(c, d, i);
 				opts.onError = (e: Error, i: WaveformPlayerInstance) => onerror?.(e, i);
 
-				instance = new Ctor(container, opts);
+				instance = new mod.default(container, opts as WaveformPlayerOptions);
 				/* createDOM() just replaced the host's class list with the
 				 * core's own; put `wfp-host` + `class` back beside it. */
 				applyHostClasses(untrack(() => hostClass));
@@ -409,31 +382,31 @@
 	/* Imperative API — reachable via `bind:this`. Thin pass-throughs;
 	 * calls before the async instance mounts are no-ops. */
 	export function play(): Promise<void> | undefined {
-		return instance?.play?.();
+		return instance?.play();
 	}
 	export function pause(): void {
-		instance?.pause?.();
+		instance?.pause();
 	}
 	export function togglePlay(): void {
-		instance?.togglePlay?.();
+		instance?.togglePlay();
 	}
 	export function seekTo(seconds: number): void {
-		instance?.seekTo?.(seconds);
+		instance?.seekTo(seconds);
 	}
 	export function seekToPercent(percent: number): void {
-		instance?.seekToPercent?.(percent);
+		instance?.seekToPercent(percent);
 	}
 	export function setVolume(volume: number): void {
-		instance?.setVolume?.(volume);
+		instance?.setVolume(volume);
 	}
 	export function setPlaybackRate(rate: number): void {
-		instance?.setPlaybackRate?.(rate);
+		instance?.setPlaybackRate(rate);
 	}
 	export function setPlayingState(playing: boolean): void {
-		instance?.setPlayingState?.(playing);
+		instance?.setPlayingState(playing);
 	}
 	export function setProgress(currentTime: number, duration: number): void {
-		instance?.setProgress?.(currentTime, duration);
+		instance?.setProgress(currentTime, duration);
 	}
 	export async function loadTrack(
 		url: string,
@@ -441,11 +414,10 @@
 		artist?: string,
 		options?: Record<string, unknown>
 	): Promise<void> {
-		if (!instance?.loadTrack) return;
-		await instance.loadTrack(url, title, artist, options);
+		await instance?.loadTrack(url, title, artist, options as WaveformPlayerOptions | undefined);
 	}
 	export function getInstance(): WaveformPlayerInstance | null {
-		return instance as unknown as WaveformPlayerInstance | null;
+		return instance;
 	}
 </script>
 

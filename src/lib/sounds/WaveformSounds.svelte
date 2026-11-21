@@ -45,10 +45,14 @@
 	import { untrack } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { renderSounds } from '@arraypress/waveform-sounds/render';
-	import type { SoundsFilter, SoundsSort, WaveformSounds as WaveformSoundsCore } from '@arraypress/waveform-sounds';
+	import type {
+		SoundsFilter,
+		SoundsSort,
+		WaveformSounds as WaveformSoundsCore,
+		WaveformSoundsOptions,
+	} from '@arraypress/waveform-sounds';
 	import type { Sound, WaveformSoundsCallbacks, WaveformSoundsProps } from './types.js';
 
-	type SoundsCtor = new (el: HTMLElement, opts: Record<string, unknown>) => WaveformSoundsCore;
 
 	/* The lowercase callback props replace the host's same-named native
 	 * handlers (`onplay`, `onpause`, `onerror` are media events, never fired
@@ -279,13 +283,6 @@
 			.then((mod) => {
 				if (my !== token || !container) return;
 
-				const Ctor = (mod.default ??
-					(mod as { WaveformSounds?: unknown }).WaveformSounds) as unknown as SoundsCtor;
-				if (typeof Ctor !== 'function') {
-					console.error('[WaveformSoundsSvelte] Failed to resolve the WaveformSounds constructor from the module.');
-					return;
-				}
-
 				/* A previous instance re-sorted, hid and painted the rows it
 				 * adopted (or restored the host on destroy): hand the new one a
 				 * fresh render, as the server would. */
@@ -302,7 +299,7 @@
 				opts.onError = forward(() => onerror);
 
 				try {
-					live = new Ctor(container, opts);
+					live = new mod.default(container, opts as WaveformSoundsOptions);
 					hosted = true;
 					instance = live;
 				} catch (err) {

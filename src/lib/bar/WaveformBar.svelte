@@ -5,7 +5,7 @@
   Singleton mount component for `@arraypress/waveform-bar`.
 
   Render this ONCE in your root layout / app entry. It renders a persist
-  host `<div>` and runs `window.WaveformBar.init(config)` inside a
+  host `<div>` and runs the bar singleton's `init(config)` inside a
   browser-only `$effect` — the core library scans the page for
   `[data-wb-play]` / `[data-wb-queue]` triggers (rendered by
   `<WaveformBarTrigger>`) and binds click handlers automatically.
@@ -24,14 +24,16 @@
 
   - Renders a `<div id={hostId}>` for the persist host.
   - On mount, dynamically `import()`s the core library (SSR-safe) and
-    calls `window.WaveformBar.init(config)`.
+    calls `init(config)` on the singleton it exports (the same object it
+    installs as `window.WaveformBar`).
   - When the config's structural shape (or `persist`) changes, calls
     `init()` again — the library destroys + recreates internally.
-  - On unmount, calls `window.WaveformBar.destroy()` so the bar doesn't
+  - On unmount, calls the singleton's `destroy()` so the bar doesn't
     leak listeners across remounts / route changes.
 -->
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
+	import type { WaveformBar as WaveformBarCore, WaveformBarConfig as CoreConfig } from '@arraypress/waveform-bar';
 	import type { WaveformBarConfig } from './types.js';
 
 	type Props = {
@@ -51,16 +53,10 @@
 		...rest
 	}: Props = $props();
 
-	/** Minimal structural view of the global the wrapper drives. */
-	type BarGlobal = { init: (config?: unknown) => void; destroy?: () => void };
-
-	function getBarGlobal(): BarGlobal | null {
-		return (
-			(typeof window !== 'undefined' &&
-				(window as unknown as { WaveformBar?: BarGlobal }).WaveformBar) ||
-			null
-		);
-	}
+	/* The bar singleton, once the module has loaded. 1.x shipped its
+	 * script-tag build as `main`, which exports nothing, so the wrapper had
+	 * to find it on `window`; 2.0's module exports it. */
+	let bar: WaveformBarCore | null = null;
 
 	/**
 	 * Stable string key from the config so a fresh object with the same
@@ -93,18 +89,14 @@
 	function doInit() {
 		const my = ++initToken;
 		void import('@arraypress/waveform-bar')
-			.then(() => {
+			.then((mod) => {
 				if (my !== initToken) return; // superseded
-				const bar = getBarGlobal();
-				if (!bar) {
-					console.warn(
-						'[WaveformBarSvelte] window.WaveformBar is undefined after import. ' +
-							'Make sure @arraypress/waveform-player is loaded BEFORE @arraypress/waveform-bar.'
-					);
-					return;
-				}
+				bar = mod.default;
 				try {
-					bar.init(config);
+					/* The bar needs `window.WaveformPlayer` (load the player
+					 * first, see Setup); without it init() logs an error and
+					 * returns. */
+					bar.init(config as CoreConfig);
 				} catch (err) {
 					console.error('[WaveformBarSvelte] init() failed:', err);
 					return;
@@ -117,9 +109,8 @@
 	}
 
 	function destroy() {
-		const bar = getBarGlobal();
 		try {
-			bar?.destroy?.();
+			bar?.destroy();
 		} catch (err) {
 			console.warn('[WaveformBarSvelte] destroy() threw during cleanup:', err);
 		}

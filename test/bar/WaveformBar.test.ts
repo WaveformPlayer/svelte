@@ -18,21 +18,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/svelte';
 
-/* The component imports the library only for its global side effect and
- * then talks to window.WaveformBar — so the module mock can be empty. */
-vi.mock('@arraypress/waveform-bar', () => ({ default: {}, WaveformBar: {} }));
+/* The component drives the singleton the module exports (2.0; the 1.x
+ * wrapper had to find it on `window`, since 1.x's `main` exported nothing). */
+const { init, destroy } = vi.hoisted(() => ({ init: vi.fn(), destroy: vi.fn() }));
+vi.mock('@arraypress/waveform-bar', () => ({ default: { init, destroy }, WaveformBar: class {} }));
 
 import WaveformBar from '../../src/lib/bar/WaveformBar.svelte';
 import WaveformBarTrigger from '../../src/lib/bar/WaveformBarTrigger.svelte';
 import type { WaveformBarConfig } from '../../src/lib/bar/types';
 
-const init = vi.fn();
-const destroy = vi.fn();
-
 beforeEach(() => {
 	init.mockClear();
 	destroy.mockClear();
-	(window as unknown as { WaveformBar: unknown }).WaveformBar = { init, destroy };
 });
 
 describe('WaveformBar (Svelte)', () => {
