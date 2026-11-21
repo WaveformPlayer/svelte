@@ -195,7 +195,8 @@ export interface WaveformPlaylistLayoutProps {
  *      `layout` (overridden above), the options the playlist never passes
  *      to its player — `audioMode` (it always owns its audio), `loop` and
  *      `showLoop` (a looping track never ends, which stops `continuous`),
- *      `lazy` (the playlist loads its own player) — and the lifecycle
+ *      `lazy` (the playlist loads its own player) — `loopLabel` (its
+ *      button never shows) and the lifecycle
  *      callbacks (covered by {@link WaveformPlaylistCallbacks}).
  *
  * The Svelte component also accepts `class`, `id`, `style`, and any other
@@ -231,6 +232,7 @@ export interface WaveformPlaylistProps
 			| 'audioMode'
 			| 'loop'
 			| 'showLoop'
+			| 'loopLabel'
 			| 'lazy'
 			| 'onLoad'
 			| 'onPlay'

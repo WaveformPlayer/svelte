@@ -31,7 +31,15 @@ assert<Equal<WaveformPlaylistProps['volume'], number | null | undefined>>();
 assert<Equal<WaveformPlaylistProps['showDownload'], boolean | undefined>>();
 
 // Stripped by the playlist, or per-track: not playlist props.
-type NotProps = 'audioMode' | 'loop' | 'showLoop' | 'lazy' | 'duration' | 'downloadUrl' | 'downloadName';
+type NotProps =
+	| 'audioMode'
+	| 'loop'
+	| 'showLoop'
+	| 'loopLabel'
+	| 'lazy'
+	| 'duration'
+	| 'downloadUrl'
+	| 'downloadName';
 assert<Equal<Extract<keyof WaveformPlaylistProps, NotProps>, never>>();
 
 // Per-track input: seconds or a clock string; the download target; wp1: peaks are strings.

@@ -52,14 +52,22 @@
 	} from './types.js';
 
 	/* Player options the playlist never passes to its player (`audioMode`,
-	 * `loop`, `showLoop`, `lazy`) and the per-track ones each `tracks` entry
+	 * `loop`, `showLoop`, `lazy`), `loopLabel` (for a button it never shows) and the per-track ones each `tracks` entry
 	 * supplies (`duration`, `downloadUrl`, `downloadName`) are not props, but
 	 * they are declared `never` here so a stray one is destructured and
 	 * swallowed below instead of landing on the host `<div>` via `...rest`.
 	 * The lowercase callback props replace the host's same-named native
 	 * handlers (`onplay`, `onload`, … are media/resource events, never fired
 	 * on a `<div>`), so their types don't intersect. */
-	type Swallowed = 'audioMode' | 'loop' | 'showLoop' | 'lazy' | 'duration' | 'downloadUrl' | 'downloadName';
+	type Swallowed =
+		| 'audioMode'
+		| 'loop'
+		| 'showLoop'
+		| 'loopLabel'
+		| 'lazy'
+		| 'duration'
+		| 'downloadUrl'
+		| 'downloadName';
 	type Props = WaveformPlaylistProps &
 		WaveformPlaylistCallbacks &
 		Omit<HTMLAttributes<HTMLDivElement>, keyof WaveformPlaylistCallbacks> & { [K in Swallowed]?: never };
@@ -90,6 +98,8 @@
 		audioMode: _audioMode,
 		loop: _loop,
 		showLoop: _showLoop,
+		// …and the loop button's label, which a playlist never shows.
+		loopLabel: _loopLabel,
 		lazy: _lazy,
 		// Per-track: set on each `tracks` entry (rendered as data-*), which
 		// the playlist reads; it ignores them as playlist-wide options.
@@ -138,7 +148,6 @@
 		seekValueText,
 		playPauseLabel,
 		speedLabel,
-		loopLabel,
 		volumeLabel,
 		muteLabel,
 		downloadLabel,
@@ -291,7 +300,6 @@
 		set('seekValueText', seekValueText);
 		set('playPauseLabel', playPauseLabel);
 		set('speedLabel', speedLabel);
-		set('loopLabel', loopLabel);
 		set('volumeLabel', volumeLabel);
 		set('muteLabel', muteLabel);
 		set('downloadLabel', downloadLabel);

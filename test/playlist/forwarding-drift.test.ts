@@ -47,6 +47,7 @@ const NOT_FORWARDED: Record<string, string> = {
 	audioMode: 'the playlist always owns its audio',
 	loop: 'a looping track never fires ended, which ends continuous auto-advance',
 	showLoop: "its button turns that same loop on (the track would repeat forever)",
+	loopLabel: 'names the showLoop button, which a playlist never shows',
 	lazy: "would only defer the playlist's own player, which it loads itself",
 };
 

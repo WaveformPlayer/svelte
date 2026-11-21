@@ -281,14 +281,13 @@ describe('WaveformPlaylist (Svelte)', () => {
 		expect(container.querySelector('div.wfp-host')!.hasAttribute('audiomode')).toBe(false);
 	});
 
-	it('forwards the 2.0 volume / download options and the control labels', async () => {
+	it('forwards the 2.0 volume / download options and their labels', async () => {
 		render(WaveformPlaylist, {
 			props: {
 				tracks: tracksA,
 				showVolume: true,
 				volume: 0.5,
 				showDownload: true,
-				loopLabel: 'Boucle',
 				volumeLabel: 'Lautstärke',
 				muteLabel: 'Stumm',
 				downloadLabel: 'Herunterladen',
@@ -299,7 +298,6 @@ describe('WaveformPlaylist (Svelte)', () => {
 			showVolume: true,
 			volume: 0.5,
 			showDownload: true,
-			loopLabel: 'Boucle',
 			volumeLabel: 'Lautstärke',
 			muteLabel: 'Stumm',
 			downloadLabel: 'Herunterladen',
@@ -309,12 +307,12 @@ describe('WaveformPlaylist (Svelte)', () => {
 	it('omits the 2.0 volume / download options when unset', async () => {
 		render(WaveformPlaylist, { props: { tracks: tracksA } });
 		await firstInstance();
-		for (const key of ['showVolume', 'volume', 'showDownload', 'loopLabel', 'volumeLabel', 'muteLabel', 'downloadLabel']) {
+		for (const key of ['showVolume', 'volume', 'showDownload', 'volumeLabel', 'muteLabel', 'downloadLabel']) {
 			expect(key in instances[0].opts, key).toBe(false);
 		}
 	});
 
-	it('swallows loop, showLoop, lazy and the per-track options: not forwarded, not on the host', async () => {
+	it('swallows loop, showLoop, loopLabel, lazy and the per-track options: not forwarded, not on the host', async () => {
 		// The playlist core strips loop / showLoop / lazy itself (a looping
 		// track never ends, which stops `continuous`), and duration /
 		// downloadUrl / downloadName belong on each track.
@@ -327,6 +325,8 @@ describe('WaveformPlaylist (Svelte)', () => {
 				// @ts-expect-error
 				showLoop: true,
 				// @ts-expect-error
+				loopLabel: 'Boucle',
+				// @ts-expect-error
 				lazy: true,
 				// @ts-expect-error
 				duration: 60,
@@ -338,7 +338,7 @@ describe('WaveformPlaylist (Svelte)', () => {
 		});
 		await firstInstance();
 		const host = container.querySelector('div.wfp-host')!;
-		for (const key of ['loop', 'showLoop', 'lazy', 'duration', 'downloadUrl', 'downloadName']) {
+		for (const key of ['loop', 'showLoop', 'loopLabel', 'lazy', 'duration', 'downloadUrl', 'downloadName']) {
 			expect(key in instances[0].opts, key).toBe(false);
 			expect(host.hasAttribute(key.toLowerCase()), key).toBe(false);
 		}
