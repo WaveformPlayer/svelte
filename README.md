@@ -12,12 +12,14 @@ Each component lives at its own sub-path and loads its core library on mount.
 The cores are optional peer dependencies, so install the ones for the
 components you import and skip the rest:
 
-| Import | Install alongside `svelte` (5.20+) |
+| Import | Install alongside `svelte` (5.59+) |
 | --- | --- |
-| `@arraypress/waveform-svelte/player` | `@arraypress/waveform-player` (1.27+) |
+| `@arraypress/waveform-svelte/player` | `@arraypress/waveform-player` |
 | `@arraypress/waveform-svelte/bar` | `@arraypress/waveform-bar` `@arraypress/waveform-player` |
 | `@arraypress/waveform-svelte/playlist` | `@arraypress/waveform-playlist` `@arraypress/waveform-player` |
 | `@arraypress/waveform-svelte/sounds` | `@arraypress/waveform-sounds` `@arraypress/waveform-player` |
+
+Every core must be 2.0 or later. Node 22.12+.
 
 There is no root import: `import … from '@arraypress/waveform-svelte'` is an
 error on purpose. A combined entry would make your bundler resolve every core,
@@ -36,6 +38,11 @@ npm install @arraypress/waveform-svelte @arraypress/waveform-player svelte
 </script>
 
 <WaveformPlayer url="/track.mp3" title="My Song" artist="The Artist" />
+
+<!-- Shows 3:07 and the waveform without fetching any audio until play;
+     `waveform` takes an array, a .json URL or compact `wp1:` peaks. -->
+<WaveformPlayer url="/track.mp3" preload="none" duration={187} waveform={peaks}
+  showVolume showDownload onseek={({ currentTime }) => console.log(currentTime)} />
 ```
 
 ## Bar
@@ -59,7 +66,7 @@ npm install @arraypress/waveform-svelte @arraypress/waveform-player svelte
   import { WaveformPlaylist } from '@arraypress/waveform-svelte/playlist';
 </script>
 
-<WaveformPlaylist tracks={[{ url: '/a.mp3', title: 'A', artist: 'Artist' }]} />
+<WaveformPlaylist tracks={[{ url: '/a.mp3', title: 'A', artist: 'Artist', duration: '3:45' }]} />
 ```
 
 ## Sounds
@@ -83,8 +90,9 @@ import '@arraypress/waveform-sounds/styles.css';
 
 ## Coming from the 1.x packages
 
-Each sub-path exports exactly what its old package did, with the same props,
-callbacks and instance methods. Only the import changes:
+Each sub-path exports what its old package did, with the same props,
+callbacks and instance methods, plus the 2.0 additions (see the CHANGELOG).
+The import changes, and the cores must be 2.0:
 
 | Before | After |
 | --- | --- |
