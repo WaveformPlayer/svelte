@@ -1,5 +1,5 @@
 /**
- * @module @arraypress/waveform-bar-svelte
+ * @module @arraypress/waveform-svelte/bar
  * @description
  * Public entry point for the Svelte 5 wrapper around
  * `@arraypress/waveform-bar`.
@@ -14,7 +14,7 @@
  *
  * ```svelte
  * <script lang="ts">
- *   import { WaveformBar, WaveformBarTrigger } from '@arraypress/waveform-bar-svelte';
+ *   import { WaveformBar, WaveformBarTrigger } from '@arraypress/waveform-svelte/bar';
  * </script>
  * ```
  */

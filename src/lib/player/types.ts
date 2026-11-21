@@ -1,7 +1,7 @@
 /**
  * @module types
  * @description
- * Public TypeScript types for `@arraypress/waveform-player-svelte`.
+ * Public TypeScript types for `@arraypress/waveform-svelte/player`.
  *
  * The shared option surface — `WaveformStyle`, `ColorPreset`,
  * `AudioMode`, `AudioPreload`, `ButtonAlign`, `WaveformMarker`,
@@ -111,7 +111,7 @@ export interface WaveformPlayerCallbacks {
  *
  * ```svelte
  * <script lang="ts">
- *   import { WaveformPlayer } from '@arraypress/waveform-player-svelte';
+ *   import { WaveformPlayer } from '@arraypress/waveform-svelte/player';
  *   let player: WaveformPlayer;
  * </script>
  *

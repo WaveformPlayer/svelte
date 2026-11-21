@@ -1,7 +1,7 @@
 /**
  * @module types
  * @description
- * Public TypeScript types for `@arraypress/waveform-sounds-svelte`.
+ * Public TypeScript types for `@arraypress/waveform-svelte/sounds`.
  *
  * The option surface is owned by the core, `@arraypress/waveform-sounds`,
  * whose hand-written `index.d.ts` is re-exported / derived here rather than
@@ -102,7 +102,7 @@ export interface WaveformSoundsCallbacks {
  *
  * ```svelte
  * <script lang="ts">
- *   import { WaveformSounds } from '@arraypress/waveform-sounds-svelte';
+ *   import { WaveformSounds } from '@arraypress/waveform-svelte/sounds';
  *   let list: WaveformSounds;
  * </script>
  *

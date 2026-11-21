@@ -1,7 +1,7 @@
 /**
  * @module types
  * @description
- * Public TypeScript types for `@arraypress/waveform-playlist-svelte`.
+ * Public TypeScript types for `@arraypress/waveform-svelte/playlist`.
  *
  * The shared option surface is owned by two core libraries and
  * re-exported / derived here rather than re-declared:
@@ -279,7 +279,7 @@ export interface WaveformPlaylistCallbacks {
  *
  * ```svelte
  * <script lang="ts">
- *   import { WaveformPlaylist } from '@arraypress/waveform-playlist-svelte';
+ *   import { WaveformPlaylist } from '@arraypress/waveform-svelte/playlist';
  *   let playlist: WaveformPlaylist;
  * </script>
  *

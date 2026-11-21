@@ -1,12 +1,12 @@
 /**
- * @module @arraypress/waveform-playlist-svelte
+ * @module @arraypress/waveform-svelte/playlist
  * @description
  * Public entry point for the Svelte 5 wrapper around
  * `@arraypress/waveform-playlist`.
  *
  * ```svelte
  * <script lang="ts">
- *   import { WaveformPlaylist } from '@arraypress/waveform-playlist-svelte';
+ *   import { WaveformPlaylist } from '@arraypress/waveform-svelte/playlist';
  * </script>
  *
  * <WaveformPlaylist
@@ -36,7 +36,7 @@
  *   AudioMode,
  *   AudioPreload,
  *   ButtonAlign,
- * } from '@arraypress/waveform-playlist-svelte';
+ * } from '@arraypress/waveform-svelte/playlist';
  * ```
  */
 export { default as WaveformPlaylist } from './WaveformPlaylist.svelte';

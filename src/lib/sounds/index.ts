@@ -1,12 +1,12 @@
 /**
- * @module @arraypress/waveform-sounds-svelte
+ * @module @arraypress/waveform-svelte/sounds
  * @description
  * Public entry point for the Svelte 5 wrapper around
  * `@arraypress/waveform-sounds`.
  *
  * ```svelte
  * <script lang="ts">
- *   import { WaveformSounds } from '@arraypress/waveform-sounds-svelte';
+ *   import { WaveformSounds } from '@arraypress/waveform-svelte/sounds';
  * </script>
  *
  * <WaveformSounds
@@ -28,7 +28,7 @@
  *   WaveformSoundsOptions,
  *   SoundInput,
  *   Sound,
- * } from '@arraypress/waveform-sounds-svelte';
+ * } from '@arraypress/waveform-svelte/sounds';
  * ```
  */
 export { default as WaveformSounds } from './WaveformSounds.svelte';

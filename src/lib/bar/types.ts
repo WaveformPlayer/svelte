@@ -1,7 +1,7 @@
 /**
  * @module types
  * @description
- * Public TypeScript types for `@arraypress/waveform-bar-svelte`.
+ * Public TypeScript types for `@arraypress/waveform-svelte/bar`.
  *
  * Two component shapes:
  *
