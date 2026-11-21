@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "includes": ["src/**", "test/**", "scripts/**", "*.ts", "*.js"] },
+  // Off for 2.0: reformatting is its own change, once a style is chosen.
+  "formatter": { "enabled": false },
+  "assist": { "enabled": false },
+  // .svelte files: Biome's default ("legacy") handling lints only the
+  // extracted <script>, so every binding used only in the markup reads as
+  // unused (9 noUnusedVariables + 3 noUnusedImports false positives here,
+  // each "fixable" by deleting a prop the component needs). Full support
+  // parses the whole component, sees template references, and also runs
+  // the a11y rules on the markup. It is labelled experimental, so only the
+  // linter uses it; the HTML formatter stays off with the rest.
+  "html": { "experimentalFullSupportEnabled": true },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      // 2.0 ships the 1.x wrappers' exact components (dist/ is compared
+      // byte-for-byte with the old packages). Every rule below is off
+      // because its fix would change emitted code. All hits are in tests.
+      "style": {
+        "noNonNullAssertion": "off" // deliberate: each `!` marks an element the test has just asserted exists
+      },
+      "suspicious": {
+        "useIterableCallbackReturn": "off" // expression-bodied forEach callbacks; a block body is different code
+      }
+    }
+  },
+  "overrides": [
+    {
+      // Never executed (not *.test.ts); it only feeds svelte-check. `import type`
+      // would erase the .svelte import, i.e. emit a different module.
+      "includes": ["test/sounds/types.typecheck.ts"],
+      "linter": { "rules": { "style": { "useImportType": "off" } } }
+    }
+  ]
+}
