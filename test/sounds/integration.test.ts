@@ -201,7 +201,7 @@ describe('WaveformSounds against the real runtime', () => {
 		expect(el.innerHTML).toBe('');
 
 		await vi.waitFor(() => expect(onready).toHaveBeenCalledTimes(1));
-		expect(fetch).toHaveBeenCalledWith('/sounds.json');
+		expect(fetch).toHaveBeenCalledWith('/sounds.json', expect.anything());
 		expect(el.querySelectorAll('[data-ws-index]')).toHaveLength(3);
 
 		const inst = Core.getInstance(el)!;

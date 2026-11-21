@@ -25,6 +25,19 @@ describe('server rendering', () => {
 		expect(typeof document).toBe('undefined');
 	});
 
+	it('renders the Loop toggle from the loop prop (a 2.0 bug drew it pressed for loop={false})', () => {
+		// A list that marks loops starts with the toggle on, unless `loop` says otherwise.
+		const loops = [
+			{ url: '/a.mp3', title: 'A', loop: true },
+			{ url: '/b.mp3', title: 'B' },
+		];
+		const pressed = (props: Record<string, unknown>) =>
+			/<button[^>]*data-ws-loop[\s>][^>]*aria-pressed="(\w+)"/.exec(render(WaveformSounds, { props }).body)?.[1];
+		expect(pressed({ sounds: loops })).toBe('true');
+		expect(pressed({ sounds: loops, loop: false })).toBe('false');
+		expect(pressed({ sounds, loop: true })).toBe('true');
+	});
+
 	it("emits the host with the core's markup inside", () => {
 		const { body } = render(WaveformSounds, {
 			props: { sounds, player: 'strip', pageSize: 1, class: 'pack', id: 'p1' },

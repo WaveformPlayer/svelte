@@ -23,7 +23,8 @@ a combined entry would make bundlers resolve every core.
 `test/<component>/` (each with its own `setup.ts`, mocks and drift tests).
 
 ## Dependencies
-The cores are **devDependencies at the published `^2.0.0`**, resolved from
+The cores are **devDependencies at the published ranges** (`^2.1.0`; `-bar`
+`^2.0.0`), resolved from
 registry.npmjs.org (no `link: true` lock entries, real directories in
 `node_modules`), so tests, typecheck and the drift tests run against what a
 consumer installs. The peer-range tests check each is a `^2.x` range at
@@ -34,7 +35,9 @@ sibling checkout, which resolves outside this root, so add it to a
 lasts (the peer-range tests fail meanwhile). Switch it back and re-resolve
 the lock before publishing: `rm -rf node_modules/@arraypress/waveform-<name>`
 then `npm install --save-dev @arraypress/waveform-<name>@^2.x.y` (a plain
-`npm install` after editing package.json keeps the `link: true` entry). Peers: each core `^2.0.0`, optional (`peerDependenciesMeta`);
+`npm install` after editing package.json keeps the `link: true` entry). Peers: each core optional (`peerDependenciesMeta`), `^2.0.0` except
+`-playlist` and `-sounds` at `^2.1.0` (the playlist's `/no-autoinit` entry;
+`pickRenderOptions`, `destroy({ restore })`);
 `svelte` `^5.59.0` — only the latest Svelte is supported. `engines.node`
 `>=22.12`. Never edit the core repos from here.
 
@@ -75,7 +78,10 @@ mount `$effect`). Callback props are read through closures and never remount.
   because the core rewrites the host's class list.
 
 ### Playlist (`src/lib/playlist/WaveformPlaylist.svelte`)
-Follows the player pattern, not the bar's. Tracks render as `[data-track]`
+Follows the player pattern, not the bar's. Imports
+`@arraypress/waveform-playlist/no-autoinit`, never the root (since 2.1 it
+scans the page and registers `<waveform-playlist>`); the tests mock the root
+to throw. Tracks render as `[data-track]`
 markup the playlist parses (`data-duration` — seconds or a clock string —,
 `data-download-url`, `data-download-name`, `data-waveform`: arrays
 JSON-encoded, strings such as `wp1:` peaks verbatim). **Not forwarded**, and
@@ -96,8 +102,13 @@ player (usually yes: `showVolume`, `volume`, `showDownload`, `volumeLabel`,
 ### Sounds (`src/lib/sounds/WaveformSounds.svelte`)
 Renders the core's own markup into the host with `{@html}` (the host's ONLY
 child) and constructs `WaveformSounds` over it; the runtime adopts it. A new
-core option: destructure + `set()`, and if it shapes markup also pass it to
-`renderSounds()`. `ssr.test.ts` checks the server render is byte-identical to
+core option: destructure + `set()`; the markup is
+`renderSounds(sounds, pickRenderOptions(buildOptions()))`, so a
+render-shaping option needs nothing more. The rebuild `$effect` destroys
+the old instance in its body (`teardown(html)`), not its cleanup — a
+cleanup still reads the OLD `markup` — with `{ restore: true }` when the
+markup is unchanged; a separate dependency-free `$effect` tears down on
+unmount. `ssr.test.ts` checks the server render is byte-identical to
 `renderSounds`; `hydration.test.ts` / `integration.test.ts` use the real core.
 `NOT_FORWARDED` is empty: the whole surface is forwarded. In the mocked suites
 render lists one at a time (concurrent dynamic imports of a `vi.mock`ed core

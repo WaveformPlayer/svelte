@@ -51,6 +51,8 @@ class MockSounds {
 		this.opts = opts;
 		const n = instances.length;
 		this.adopted = el.querySelector('[data-ws-list]');
+		/* Adopted markup as it arrived, for destroy({ restore: true }). */
+		const arrived = el.innerHTML;
 		let original: string | null = null;
 		if (!this.adopted) {
 			original = el.innerHTML;
@@ -64,9 +66,10 @@ class MockSounds {
 		const player = opts.player === 'strip' ? 'strip' : 'inline';
 		el.classList.add('waveform-sounds', `waveform-sounds--${player}`);
 		el.dataset.wsInitialized = 'true';
-		this.destroy.mockImplementation(() => {
+		this.destroy.mockImplementation((options?: { restore?: boolean }) => {
 			lifecycle.push(`destroy:${n}`);
 			if (original !== null) el.innerHTML = original;
+			else if (options?.restore) el.innerHTML = arrived;
 			el.classList.remove('waveform-sounds--inline', 'waveform-sounds--strip');
 			delete el.dataset.wsInitialized;
 		});
@@ -308,23 +311,24 @@ describe('WaveformSounds (Svelte)', () => {
 		expect(host(container).querySelectorAll('[data-ws-list] > [data-ws-index]')).toHaveLength(3);
 	});
 
-	it('a rebuild for a non-markup option hands the new instance a fresh render', async () => {
+	it('a rebuild for a non-markup option hands the new instance clean markup', async () => {
 		// The markup is unchanged, so Svelte won't rewrite it — but the old
 		// instance hid, re-sorted and painted those rows.
-		const { component } = render(Harness, { props: { initial: { sounds: soundsA, loop: false } } });
+		const { component } = render(Harness, { props: { initial: { sounds: soundsA, autoAdvance: false } } });
 		await firstInstance();
 		expect(instances[0].dirtyOnArrival).toBe(false);
 
-		(component as unknown as HarnessApi).set('loop', true);
+		(component as unknown as HarnessApi).set('autoAdvance', true);
 		flushSync();
 		await vi.waitFor(() => expect(instances.length).toBe(2));
 
-		expect(instances[1].opts.loop).toBe(true);
+		expect(instances[0].destroy).toHaveBeenCalledWith({ restore: true });
+		expect(instances[1].opts.autoAdvance).toBe(true);
 		expect(instances[1].adopted).not.toBeNull();
 		expect(instances[1].dirtyOnArrival).toBe(false);
 	});
 
-	it('switching from a manifest to sounds renders and adopts the sounds', async () => {
+	it('switching from a manifest to sounds builds the sounds', async () => {
 		const { component, container } = render(Harness, {
 			props: { initial: { sounds: undefined, manifest: '/sounds.json' } },
 		});
@@ -335,11 +339,13 @@ describe('WaveformSounds (Svelte)', () => {
 		flushSync();
 		await vi.waitFor(() => expect(instances.length).toBe(2));
 
-		// The manifest instance restored the host on destroy; the rebuild
-		// still hands the new one the rendered sounds.
-		expect(instances[1].adopted).not.toBeNull();
-		expect(instances[1].rowUrls).toEqual(['/kick.mp3', '/loop.mp3']);
-		expect(host(container).querySelectorAll('[data-ws-index]')).toHaveLength(2);
+		// The manifest instance restored the host it found (empty) on
+		// destroy, over Svelte's render; the new instance builds the list
+		// from `sounds` itself, the same renderSounds output.
+		expect(instances[0].destroy).toHaveBeenCalledTimes(1);
+		expect(instances[1].opts.sounds).toEqual(soundsA);
+		expect(instances[1].opts.manifest).toBe('/sounds.json');
+		expect(host(container).querySelectorAll('[data-ws-index]')).toHaveLength(1);
 	});
 
 	it('exposes the imperative API via the component instance', async () => {

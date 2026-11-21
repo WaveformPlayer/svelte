@@ -94,8 +94,8 @@
   "peerDependencies": {
     "@arraypress/waveform-bar": "^2.0.0",
     "@arraypress/waveform-player": "^2.0.0",
-    "@arraypress/waveform-playlist": "^2.0.0",
-    "@arraypress/waveform-sounds": "^2.0.0",
+    "@arraypress/waveform-playlist": "^2.1.0",
+    "@arraypress/waveform-sounds": "^2.1.0",
     "svelte": "^5.59.0"
   },
   "peerDependenciesMeta": {
@@ -124,9 +124,9 @@
   },
   "devDependencies": {
     "@arraypress/waveform-bar": "^2.0.0",
-    "@arraypress/waveform-player": "^2.0.0",
-    "@arraypress/waveform-playlist": "^2.0.0",
-    "@arraypress/waveform-sounds": "^2.0.0",
+    "@arraypress/waveform-player": "^2.1.0",
+    "@arraypress/waveform-playlist": "^2.1.0",
+    "@arraypress/waveform-sounds": "^2.1.0",
     "@biomejs/biome": "^2.6.8",
     "@sveltejs/package": "^3.0.3",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",

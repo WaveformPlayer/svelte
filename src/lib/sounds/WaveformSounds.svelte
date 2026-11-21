@@ -20,9 +20,13 @@
 
   Any change to `sounds` or a construction option destroys and rebuilds the
   instance (like the playlist / player wrappers — simpler than diffing every
-  option). Before a rebuild the host's content is reset to a fresh render,
-  so the new instance never adopts rows the old one re-sorted, hid or
-  painted. The host deliberately does NOT carry `data-waveform-sounds` —
+  option). A rebuild over unchanged markup destroys the old instance with
+  `{ restore: true }` (the core puts its markup back as it arrived), so the
+  new instance never adopts rows the old one re-sorted, hid or painted;
+  changed markup is Svelte's fresh render, already in place. The render
+  options are the core's own list (`pickRenderOptions`) over the forwarded
+  options, not a hand-kept one (2.0's lacked `loop`: `loop={false}` drew
+  the Loop toggle pressed on the server, then flipped on hydration). The host deliberately does NOT carry `data-waveform-sounds` —
   that attribute drives the core's *global* auto-init, which would
   double-mount on top of the instance this component owns.
 
@@ -44,7 +48,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { renderSounds } from '@arraypress/waveform-sounds/render';
+	import { pickRenderOptions, renderSounds } from '@arraypress/waveform-sounds/render';
 	import type {
 		SoundsFilter,
 		SoundsSort,
@@ -125,14 +129,16 @@
 	/* Non-reactive handle: the methods below use it, and the mount effect
 	 * must not depend on it. `instance` mirrors it for `bind:instance`. */
 	let live: WaveformSoundsCore | null = null;
-	/* Set once an instance has lived on the host: from then on, a (re)mount
-	 * resets the host's content to a fresh render before constructing. */
-	let hosted = false;
+	/* The markup `live` was built over, to tell at teardown whether Svelte
+	 * has since written new markup into the host. */
+	let builtMarkup: string | null = null;
 
 	/**
 	 * The core's markup for `sounds` — what the server sends and the runtime
 	 * adopts. Empty without `sounds` (a `manifest` is fetched in the
 	 * browser). Reads `sounds` deeply, so a mutated `$state` array re-renders.
+	 * The render options are the forwarded options the core says shape the
+	 * markup (`pickRenderOptions`), so a new one needs no edit here.
 	 * A render that throws (malformed sounds) degrades to an empty host the
 	 * runtime then fills — or reports through `onerror` — rather than
 	 * failing the whole server render.
@@ -140,20 +146,7 @@
 	const markup = $derived.by(() => {
 		if (!Array.isArray(sounds)) return '';
 		try {
-			return renderSounds(sounds, {
-				player,
-				search,
-				filters,
-				sorts,
-				showCount,
-				menuSearch,
-				loopToggle,
-				maxTypeChips,
-				pageSize,
-				columns,
-				strings,
-				idPrefix: prefix,
-			});
+			return renderSounds(sounds, pickRenderOptions(buildOptions() as WaveformSoundsOptions));
 		} catch (err) {
 			console.error('[WaveformSoundsSvelte] Failed to render sounds:', err);
 			return '';
@@ -263,15 +256,27 @@
 		return (...args: unknown[]) => (get() as ((...a: unknown[]) => void) | undefined)?.(...args);
 	}
 
-	function teardown() {
+	/**
+	 * Destroy the live instance.
+	 *
+	 * @param next - The markup the next instance gets, or `null` on unmount.
+	 *   Unchanged markup still carries the old instance's state (sorted,
+	 *   hidden, painted rows), and Svelte won't rewrite it: the core puts it
+	 *   back as it arrived. Changed markup is about to be Svelte's fresh
+	 *   render, which a plain destroy() leaves in place. (A list the core
+	 *   built itself — a manifest — is reset to what the host held before
+	 *   either way.)
+	 */
+	function teardown(next: string | null) {
 		if (live) {
 			try {
-				live.destroy();
+				live.destroy({ restore: next === builtMarkup });
 			} catch (err) {
 				console.warn('[WaveformSoundsSvelte] destroy() threw:', err);
 			}
 		}
 		live = null;
+		builtMarkup = null;
 		instance = null;
 	}
 
@@ -282,11 +287,6 @@
 		import('@arraypress/waveform-sounds/no-autoinit')
 			.then((mod) => {
 				if (my !== token || !container) return;
-
-				/* A previous instance re-sorted, hid and painted the rows it
-				 * adopted (or restored the host on destroy): hand the new one a
-				 * fresh render, as the server would. */
-				if (hosted) container.innerHTML = html;
 
 				/* Wire callbacks. The props are reactive and read at call
 				 * time, so the closures always reach the latest handler
@@ -300,7 +300,7 @@
 
 				try {
 					live = new mod.default(container, opts as WaveformSoundsOptions);
-					hosted = true;
+					builtMarkup = html;
 					instance = live;
 				} catch (err) {
 					console.error('[WaveformSoundsSvelte] Failed to construct WaveformSounds:', err);
@@ -315,19 +315,24 @@
 	 * `buildOptions()` (every construction option) are read synchronously, so
 	 * the effect re-runs — and rebuilds — when either changes. Callback props
 	 * and `class` are not read here, so they never rebuild. Browser-only: SSR
-	 * renders just the host and its markup. */
+	 * renders just the host and its markup. The old instance is destroyed
+	 * here, not in the cleanup, because the restore decision needs the NEW
+	 * markup (a cleanup still reads the old one); the cleanup only cancels
+	 * an in-flight mount. */
 	$effect(() => {
 		const html = markup;
 		const opts = buildOptions();
 		untrack(() => {
-			teardown();
+			teardown(html);
 			mount(opts, html);
 		});
 		return () => {
 			token += 1;
-			untrack(teardown);
 		};
 	});
+
+	/* Unmount: no dependencies, so this cleanup runs only then. */
+	$effect(() => () => untrack(() => teardown(null)));
 
 	/* Imperative API — reachable via `bind:this`. Thin pass-throughs;
 	 * calls before the async instance mounts are safe no-ops. */

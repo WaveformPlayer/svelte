@@ -343,7 +343,10 @@
 		const my = ++token;
 		if (!container) return;
 
-		import('@arraypress/waveform-playlist')
+		/* `/no-autoinit`, never the root: since 2.1 the root scans the page
+		 * for `[data-waveform-playlist]` and registers `<waveform-playlist>`
+		 * on import. */
+		import('@arraypress/waveform-playlist/no-autoinit')
 			.then((mod) => {
 				if (my !== token || !container) return;
 

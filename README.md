@@ -19,7 +19,8 @@ components you import and skip the rest:
 | `@arraypress/waveform-svelte/playlist` | `@arraypress/waveform-playlist` `@arraypress/waveform-player` |
 | `@arraypress/waveform-svelte/sounds` | `@arraypress/waveform-sounds` `@arraypress/waveform-player` |
 
-Every core must be 2.0 or later. Node 22.12+.
+Every core must be 2.0 or later; `./playlist` and `./sounds` need
+`@arraypress/waveform-playlist` / `-sounds` 2.1 or later. Node 22.12+.
 
 There is no root import: `import … from '@arraypress/waveform-svelte'` is an
 error on purpose. A combined entry would make your bundler resolve every core,

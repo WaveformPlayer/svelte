@@ -6,8 +6,9 @@
  * `@arraypress/waveform-sounds@2.0.0` is the release whose option types
  * live in `types/types.d.ts` (the drift test reads them) and which passes
  * each sound's `duration` to its engine; it in turn needs
- * `@arraypress/waveform-player@2.0.0`. (The `/render` + `/no-autoinit`
- * subpaths this wrapper imports date from 0.1.0.) The repo develops against
+ * `@arraypress/waveform-player@2.0.0`. The server render takes the core's
+ * `pickRenderOptions()` and a rebuild uses `destroy({ restore: true })`,
+ * both new in 2.1.0, so that is the floor. The repo develops against
  * the published 2.0 packages: the devDependencies are `^2.x` ranges at least
  * the peer floor (a temporary `file:` link for cross-repo work fails here,
  * so it can't be published by accident).
@@ -32,8 +33,8 @@ const atLeast = (range: string, min: string): boolean => {
 };
 
 describe('peer dependency floors', () => {
-	it('requires waveform-sounds >= 2.0.0 (generated types, per-sound duration)', () => {
-		expect(atLeast(pkg.peerDependencies['@arraypress/waveform-sounds'], '2.0.0')).toBe(true);
+	it('requires waveform-sounds >= 2.1.0 (pickRenderOptions, destroy({ restore }))', () => {
+		expect(atLeast(pkg.peerDependencies['@arraypress/waveform-sounds'], '2.1.0')).toBe(true);
 	});
 
 	it("requires waveform-player >= 2.0.0 (the sounds core's own floor)", () => {
@@ -41,10 +42,13 @@ describe('peer dependency floors', () => {
 	});
 
 	it('develops against the published 2.0 packages (a ^2.x devDependency at least the peer floor)', () => {
-		for (const name of ['@arraypress/waveform-sounds', '@arraypress/waveform-player'] as const) {
+		for (const [name, min] of [
+			['@arraypress/waveform-sounds', '2.1.0'],
+			['@arraypress/waveform-player', '2.0.0'],
+		] as const) {
 			const range = pkg.devDependencies[name];
 			expect(floor(range)[0], `${name}@${range} is not a ^2.x range`).toBe(2);
-			expect(atLeast(range, '2.0.0'), `${name}@${range} < 2.0.0`).toBe(true);
+			expect(atLeast(range, min), `${name}@${range} < ${min}`).toBe(true);
 		}
 	});
 
