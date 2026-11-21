@@ -41,7 +41,12 @@
 	};
 	type PlayerCtor = new (el: HTMLElement, opts: Record<string, unknown>) => PlayerInstance;
 
-	type Props = WaveformPlayerProps & WaveformPlayerCallbacks & HTMLAttributes<HTMLDivElement>;
+	/* The lowercase callback props replace the host's same-named native
+	 * handlers (`onplay`, `onratechange`, `onvolumechange`, … are media
+	 * events, never fired on a `<div>`), so their types don't intersect. */
+	type Props = WaveformPlayerProps &
+		WaveformPlayerCallbacks &
+		Omit<HTMLAttributes<HTMLDivElement>, keyof WaveformPlayerCallbacks>;
 
 	let {
 		// ── Audio source ───────────────────────────────────────────────
@@ -132,6 +137,11 @@
 		onerror,
 		onnexttrack,
 		onprevioustrack,
+		// ── 2.0 events (`waveformplayer:*` on the host) ────────────────
+		onseek,
+		onratechange,
+		onvolumechange,
+		onloop,
 		// ── Host element ───────────────────────────────────────────────
 		class: className = '',
 		...rest
@@ -366,6 +376,34 @@
 			token += 1;
 			teardown();
 		};
+	});
+
+	/*
+	 * The 2.0 events with no option callback. The core dispatches each as a
+	 * bubbling `waveformplayer:<name>` CustomEvent on its container — this
+	 * host — whose `detail` carries the data. Listened for once, for the
+	 * component's life (every remount reuses the host); the handler props
+	 * are read when an event fires, never inside this effect, so changing
+	 * one doesn't remount the player or re-register anything.
+	 */
+	const EVENTS = {
+		'waveformplayer:seek': () => onseek,
+		'waveformplayer:ratechange': () => onratechange,
+		'waveformplayer:volumechange': () => onvolumechange,
+		'waveformplayer:loop': () => onloop,
+	} as const;
+
+	$effect(() => {
+		const host = container;
+		const off = Object.entries(EVENTS).map(([type, handler]) => {
+			const listener = (event: Event) => {
+				if (event.target !== host) return; // the core dispatches on the host itself
+				(handler() as ((detail: unknown) => void) | undefined)?.((event as CustomEvent).detail);
+			};
+			host.addEventListener(type, listener);
+			return () => host.removeEventListener(type, listener);
+		});
+		return () => off.forEach((remove) => remove());
 	});
 
 	/* Imperative API — reachable via `bind:this`. Thin pass-throughs;

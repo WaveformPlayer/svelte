@@ -13,7 +13,14 @@
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
-import type { WaveformPlayerCallbacks, WaveformPlayerProps } from '../../src/lib/player/types.js';
+import type {
+	WaveformLoopEventDetail,
+	WaveformPlayerCallbacks,
+	WaveformPlayerProps,
+	WaveformRateChangeEventDetail,
+	WaveformSeekEventDetail,
+	WaveformVolumeChangeEventDetail,
+} from '../../src/lib/player/types.js';
 
 /** Captures every constructed instance so assertions can inspect them. */
 const instances: MockPlayer[] = [];
@@ -413,6 +420,87 @@ describe('WaveformPlayer (Svelte)', () => {
 		expect('downloadName' in instances[1].opts).toBe(false);
 	});
 
+	/* The 2.0 events with no option callback reach their props from the
+	 * core's `waveformplayer:*` CustomEvents on the host. */
+	const fire = (host: Element, name: string, detail: Record<string, unknown>) =>
+		host.dispatchEvent(new CustomEvent(`waveformplayer:${name}`, { bubbles: true, composed: true, detail }));
+
+	it('calls onseek / onratechange / onvolumechange / onloop with the event detail', async () => {
+		const onseek = vi.fn();
+		const onratechange = vi.fn();
+		const onvolumechange = vi.fn();
+		const onloop = vi.fn();
+		const { container } = render(WaveformPlayer, {
+			props: { url: '/a.mp3', onseek, onratechange, onvolumechange, onloop },
+		});
+		await firstInstance();
+		const host = container.querySelector('div.wfp-host')!;
+		const player = instances[0];
+		fire(host, 'seek', { player, url: '/a.mp3', currentTime: 12, duration: 187 });
+		fire(host, 'ratechange', { player, url: '/a.mp3', playbackRate: 1.5 });
+		fire(host, 'volumechange', { player, url: '/a.mp3', volume: 0.25, muted: false });
+		fire(host, 'loop', { player, url: '/a.mp3', loop: false, start: 10, end: 20 });
+		expect(onseek).toHaveBeenCalledWith({ player, url: '/a.mp3', currentTime: 12, duration: 187 });
+		expect(onratechange).toHaveBeenCalledWith({ player, url: '/a.mp3', playbackRate: 1.5 });
+		expect(onvolumechange).toHaveBeenCalledWith({ player, url: '/a.mp3', volume: 0.25, muted: false });
+		expect(onloop).toHaveBeenCalledWith({ player, url: '/a.mp3', loop: false, start: 10, end: 20 });
+	});
+
+	it('never passes the event props to the core or onto the host', async () => {
+		const { container } = render(WaveformPlayer, {
+			props: { url: '/a.mp3', onseek: vi.fn(), onratechange: vi.fn(), onvolumechange: vi.fn(), onloop: vi.fn() },
+		});
+		await firstInstance();
+		const host = container.querySelector('div.wfp-host') as HTMLDivElement;
+		for (const key of ['onseek', 'onratechange', 'onvolumechange', 'onloop', 'onSeek', 'onLoop']) {
+			expect(key in instances[0].opts, key).toBe(false);
+			expect(host.hasAttribute(key), key).toBe(false);
+		}
+		// A native `ratechange` on the div is not the player's event.
+		host.dispatchEvent(new Event('ratechange'));
+	});
+
+	it('ignores a waveformplayer:* event bubbling up from inside the host', async () => {
+		const onseek = vi.fn();
+		const { container } = render(WaveformPlayer, { props: { url: '/a.mp3', onseek } });
+		await firstInstance();
+		const inner = document.createElement('div');
+		container.querySelector('div.wfp-host')!.appendChild(inner);
+		fire(inner, 'seek', { currentTime: 1 });
+		expect(onseek).not.toHaveBeenCalled();
+	});
+
+	it('reaches the latest event handler without remounting, and survives a remount', async () => {
+		const first = vi.fn();
+		const { component, container } = render(Harness, { props: { initial: { url: '/a.mp3', onseek: first } } });
+		await firstInstance();
+		const host = container.querySelector('div.wfp-host')!;
+
+		const second = vi.fn();
+		flushSync(() => component.update({ onseek: second }));
+		await new Promise<void>((resolve) => setTimeout(resolve, 50));
+		expect(instances).toHaveLength(1);
+		fire(host, 'seek', { currentTime: 3 });
+		expect(first).not.toHaveBeenCalled();
+		expect(second).toHaveBeenCalledTimes(1);
+
+		// A remount reuses the host, so the listener carries on.
+		flushSync(() => component.update({ url: '/b.mp3' }));
+		await vi.waitFor(() => expect(instances.length).toBe(2));
+		fire(host, 'seek', { currentTime: 4 });
+		expect(second).toHaveBeenCalledTimes(2);
+	});
+
+	it('stops listening on unmount', async () => {
+		const onloop = vi.fn();
+		const { container, unmount } = render(WaveformPlayer, { props: { url: '/a.mp3', onloop } });
+		await firstInstance();
+		const host = container.querySelector('div.wfp-host')!;
+		unmount();
+		fire(host, 'loop', { loop: true, start: null, end: null });
+		expect(onloop).not.toHaveBeenCalled();
+	});
+
 	it('treats style as inline CSS on the host, never as the core waveformStyle alias', async () => {
 		const { container } = render(WaveformPlayer, {
 			props: { url: '/a.mp3', style: 'min-height: 64px' },
@@ -434,5 +522,12 @@ describe('WaveformPlayer types (Svelte)', () => {
 		expectTypeOf<WaveformPlayerProps>().not.toHaveProperty('onPreviousTrack');
 		expectTypeOf<WaveformPlayerCallbacks>().toHaveProperty('onnexttrack');
 		expectTypeOf<WaveformPlayerCallbacks>().toHaveProperty('onprevioustrack');
+	});
+
+	it('types the 2.0 event props with the core event details', () => {
+		expectTypeOf<Parameters<NonNullable<WaveformPlayerCallbacks['onseek']>>[0]>().toEqualTypeOf<WaveformSeekEventDetail>();
+		expectTypeOf<Parameters<NonNullable<WaveformPlayerCallbacks['onratechange']>>[0]>().toEqualTypeOf<WaveformRateChangeEventDetail>();
+		expectTypeOf<Parameters<NonNullable<WaveformPlayerCallbacks['onvolumechange']>>[0]>().toEqualTypeOf<WaveformVolumeChangeEventDetail>();
+		expectTypeOf<Parameters<NonNullable<WaveformPlayerCallbacks['onloop']>>[0]>().toEqualTypeOf<WaveformLoopEventDetail>();
 	});
 });

@@ -26,6 +26,10 @@
  *   AudioMode,
  *   AudioPreload,
  *   ButtonAlign,
+ *   WaveformSeekEventDetail,
+ *   WaveformRateChangeEventDetail,
+ *   WaveformVolumeChangeEventDetail,
+ *   WaveformLoopEventDetail,
  * } from '@arraypress/waveform-svelte/player';
  * ```
  */
@@ -42,4 +46,8 @@ export type {
 	AudioMode,
 	AudioPreload,
 	ButtonAlign,
+	WaveformSeekEventDetail,
+	WaveformRateChangeEventDetail,
+	WaveformVolumeChangeEventDetail,
+	WaveformLoopEventDetail,
 } from './types.js';

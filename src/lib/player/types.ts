@@ -23,8 +23,12 @@
  * @see {@link https://github.com/WaveformPlayer/waveform-player} — core library
  */
 import type {
+	WaveformLoopEventDetail,
 	WaveformPlayer,
 	WaveformPlayerOptions,
+	WaveformRateChangeEventDetail,
+	WaveformSeekEventDetail,
+	WaveformVolumeChangeEventDetail,
 } from '@arraypress/waveform-player';
 
 /**
@@ -41,6 +45,10 @@ export type {
 	ButtonAlign,
 	WaveformMarker,
 	WaveformPeaks,
+	WaveformSeekEventDetail,
+	WaveformRateChangeEventDetail,
+	WaveformVolumeChangeEventDetail,
+	WaveformLoopEventDetail,
 } from '@arraypress/waveform-player';
 
 /**
@@ -83,13 +91,21 @@ export type WaveformPlayerProps = Omit<
 >;
 
 /**
- * Lifecycle callback props. Each maps to the core library's same-named
- * option callback and forwards the live `WaveformPlayer` instance.
- * Lowercase to match Svelte's native event-attribute convention
- * (`onclick`, `oninput`, …).
+ * Lifecycle callback props. Lowercase to match Svelte's native
+ * event-attribute convention (`onclick`, `oninput`, …); on this component
+ * they replace the host `<div>`'s same-named DOM handlers.
+ *
+ * - `onload` … `onprevioustrack` map to the core's same-named option
+ *   callbacks and receive the live `WaveformPlayer` instance.
+ * - `onseek`, `onratechange`, `onvolumechange` and `onloop` (core 2.0)
+ *   have no option callback: they are the player's `waveformplayer:*`
+ *   events, and receive that event's `detail` (which carries the
+ *   `player` too).
+ *
+ * Changing a handler never remounts the player.
  *
  * ```svelte
- * <WaveformPlayer onplay={(i) => …} ontimeupdate={(t, d) => …} />
+ * <WaveformPlayer onplay={(i) => …} onseek={({ currentTime }) => …} />
  * ```
  */
 export interface WaveformPlayerCallbacks {
@@ -113,6 +129,22 @@ export interface WaveformPlayerCallbacks {
 	onnexttrack?: (instance: WaveformPlayer) => void;
 	/** Media Session "previous track" handler — the skip-back counterpart of `onnexttrack`. */
 	onprevioustrack?: (instance: WaveformPlayer) => void;
+	/**
+	 * The audio landed on a new position — a click, a key, a marker,
+	 * `seekTo()`, or a `loop` wrapping back to 0. Receives the
+	 * `waveformplayer:seek` detail (`currentTime`, `duration`, `player`,
+	 * `url`). Self mode only.
+	 */
+	onseek?: (detail: WaveformSeekEventDetail) => void;
+	/** The playback rate changed (`playbackRate` in the detail). Self mode only. */
+	onratechange?: (detail: WaveformRateChangeEventDetail) => void;
+	/** The volume or mute state changed (`volume`, `muted` in the detail). Self mode only. */
+	onvolumechange?: (detail: WaveformVolumeChangeEventDetail) => void;
+	/**
+	 * The loop state changed: whole-track `loop`, and the section loop's
+	 * `start` / `end` (or `null`). Self mode only.
+	 */
+	onloop?: (detail: WaveformLoopEventDetail) => void;
 }
 
 /**

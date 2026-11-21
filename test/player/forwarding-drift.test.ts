@@ -20,7 +20,13 @@ import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushSync } from 'svelte';
 import { cleanup, render } from '@testing-library/svelte';
-import { isCallbackKey, loadCoreOptionKeys, loadCoreThemes, sampleValues } from './core-options';
+import {
+	isCallbackKey,
+	loadCoreOptionKeys,
+	loadCoreThemes,
+	loadInstanceEventNames,
+	sampleValues,
+} from './core-options';
 
 /**
  * Core options this wrapper deliberately does NOT forward, each with why.
@@ -171,6 +177,55 @@ describe('WaveformPlayer (Svelte) — forwarding drift vs the installed core', (
 			...Object.keys(FORWARDED_AS),
 		].filter((k) => !keys.includes(k));
 		expect(unknown, 'stale entries — the core no longer has these options').toEqual([]);
+	});
+});
+
+/**
+ * Core events already reachable through an option callback (and so through
+ * its lowercase prop, covered above). Every other event the core dispatches
+ * must be a `on<name>` prop that receives the `waveformplayer:<name>` detail.
+ */
+const EVENT_VIA_CALLBACK: Record<string, string> = {
+	load: 'onLoad',
+	play: 'onPlay',
+	pause: 'onPause',
+	ended: 'onEnd',
+	error: 'onError',
+	timeupdate: 'onTimeUpdate',
+	next: 'onNextTrack',
+	previous: 'onPreviousTrack',
+};
+
+describe('WaveformPlayer (Svelte) — event drift vs the installed core', () => {
+	it('exposes every core event: through its option callback, or as an on<name> prop', async () => {
+		const events = loadInstanceEventNames();
+		const { keys } = await loadCoreOptionKeys();
+		const missing: string[] = [];
+
+		for (const name of events) {
+			const callback = EVENT_VIA_CALLBACK[name];
+			if (callback) {
+				if (!keys.includes(callback)) missing.push(`${name} (core has no ${callback} any more)`);
+				continue;
+			}
+			cleanup();
+			instances.length = 0;
+			const handler = vi.fn();
+			const { container } = render(WaveformPlayer, { props: { url: '/a.mp3', [`on${name}`]: handler } });
+			if (!(await mounted(1))) throw new Error(`no mount for on${name}`);
+			const detail = { player: instances[0], url: '/a.mp3', marker: name };
+			container.querySelector('div')!.dispatchEvent(
+				new CustomEvent(`waveformplayer:${name}`, { bubbles: true, composed: true, detail })
+			);
+			if (handler.mock.calls.length !== 1 || handler.mock.calls[0][0] !== detail) missing.push(name);
+		}
+
+		expect(missing, 'core events with no prop on the component').toEqual([]);
+	});
+
+	it('EVENT_VIA_CALLBACK only names events the core actually has', () => {
+		const events = loadInstanceEventNames();
+		expect(Object.keys(EVENT_VIA_CALLBACK).filter((e) => !events.includes(e))).toEqual([]);
 	});
 });
 

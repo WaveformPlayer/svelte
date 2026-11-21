@@ -63,6 +63,20 @@ export function loadTypedOptionKeys(): string[] {
 }
 
 /**
+ * The events a player dispatches on itself — the keys of the core's
+ * `WaveformPlayerInstanceEventMap` (`load`, `play`, …, `seek`, `loop`).
+ * Each is also a `waveformplayer:<name>` CustomEvent on its container.
+ */
+export function loadInstanceEventNames(): string[] {
+	const dts = readFileSync(join(coreRoot, 'types/types.d.ts'), 'utf8');
+	const body = /export interface WaveformPlayerInstanceEventMap\s*\{([\s\S]*?)\n\}/.exec(dts)?.[1];
+	if (!body) throw new Error('[test] WaveformPlayerInstanceEventMap not found in the core types/types.d.ts');
+	const names = [...body.matchAll(/^\s+'?([\w-]+)'?\??\s*:/gm)].map((m) => m[1]);
+	if (names.length < 8) throw new Error('[test] core event map parsed too small — did the core layout change?');
+	return names;
+}
+
+/**
  * Every option key the core accepts: `DEFAULT_OPTIONS` ∪ typed keys, sorted.
  * Throws if either source parses suspiciously small, so a broken parse can't
  * make the drift test pass vacuously.
