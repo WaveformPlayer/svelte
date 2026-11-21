@@ -47,8 +47,30 @@ describe('server rendering', () => {
 		expect(body).not.toContain('data-waveform-sounds');
 		// The host `id` is the dropdowns' id prefix (no `idPrefix` prop).
 		expect(body).toContain(renderSounds(sounds, { player: 'strip', pageSize: 1, idPrefix: 'p1' }));
-		// Escaped by the core renderer, not double-escaped by Svelte.
-		expect(body).toContain('Loop &lt;04&gt;');
+		// Every sound rides in the core's inert JSON script (the row past the
+		// page isn't in the markup), escaped by the core renderer and passed
+		// through by `{@html}` untouched — not double-escaped by Svelte.
+		expect(body).toContain('<script type="application/json" data-ws-sounds>');
+		expect(body).toContain('"title":"Loop \\u003c04>"');
+		expect(body).not.toContain('&amp;lt;');
+		expect(body).not.toContain('<04>');
+	});
+
+	it('honours mergeEnharmonicKeys in the server markup (default merged, false keeps spellings apart)', () => {
+		const keyed = [
+			{ url: '/a.mp3', title: 'A', key: 'A#m' },
+			{ url: '/b.mp3', title: 'B', key: 'Bbm' },
+			{ url: '/c.mp3', title: 'C', key: 'C' },
+		];
+		const keyValues = (props: Record<string, unknown>) =>
+			[...render(WaveformSounds, { props: { sounds: keyed, ...props } }).body.matchAll(
+				/<li role="option" id="[^"]*-key-\d+"[^>]*data-value="([^"]+)"/g,
+			)].map((m) => m[1]);
+		expect(keyValues({})).toEqual(['C', 'Bbm']);
+		expect(keyValues({ mergeEnharmonicKeys: true })).toEqual(['C', 'Bbm']);
+		expect(keyValues({ mergeEnharmonicKeys: false })).toEqual(['C', 'A#m', 'Bbm']);
+		const { body } = render(WaveformSounds, { props: { sounds: keyed, mergeEnharmonicKeys: false, id: 'k' } });
+		expect(body).toContain(renderSounds(keyed, { mergeEnharmonicKeys: false, idPrefix: 'k' }));
 	});
 
 	it('renders an empty host for a manifest (fetched in the browser)', () => {

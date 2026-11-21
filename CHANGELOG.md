@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.2.0 — 2026-11-22
+
+For `@arraypress/waveform-sounds` 2.2.0 (the other cores are unchanged).
+
+### Added — sounds (`./sounds`)
+- **`mergeEnharmonicKeys`** prop (default `true`, the core's): A#m and Bbm,
+  C# and Db are one key-menu entry. It is forwarded to the runtime and
+  shapes the server markup through the core's `pickRenderOptions()`, so
+  `mergeEnharmonicKeys={false}` renders the spellings apart on the server
+  and keeps them apart after hydration.
+
+### Changed
+- **The server-rendered markup is sounds 2.2's**: only the rows the list
+  starts with are rendered, each carrying just `data-ws-index`; every
+  sound rides once in an inert `<script type="application/json"
+  data-ws-sounds>` inside the host's `{@html}`, which hydrates without a
+  mismatch. Icons are one sprite per list. Read a row's sound from the
+  instance (`instance.sounds[row.dataset.wsIndex]`), not from row
+  attributes.
+- **Peer**: `@arraypress/waveform-sounds` is `^2.2.0` (the markup this
+  component renders must be the markup the runtime adopts). `-player`,
+  `-bar` and `-playlist` are unchanged. All four remain optional.
+
 ## 2.1.0 — 2026-11-21
 
 For the 2.1 cores (`@arraypress/waveform-player`, `-playlist` and `-sounds`

@@ -23,8 +23,8 @@ a combined entry would make bundlers resolve every core.
 `test/<component>/` (each with its own `setup.ts`, mocks and drift tests).
 
 ## Dependencies
-The cores are **devDependencies at the published ranges** (`^2.1.0`; `-bar`
-`^2.0.0`), resolved from
+The cores are **devDependencies at the published ranges** (`^2.1.0`;
+`-sounds` `^2.2.0`; `-bar` `^2.0.0`), resolved from
 registry.npmjs.org (no `link: true` lock entries, real directories in
 `node_modules`), so tests, typecheck and the drift tests run against what a
 consumer installs. The peer-range tests check each is a `^2.x` range at
@@ -36,8 +36,9 @@ lasts (the peer-range tests fail meanwhile). Switch it back and re-resolve
 the lock before publishing: `rm -rf node_modules/@arraypress/waveform-<name>`
 then `npm install --save-dev @arraypress/waveform-<name>@^2.x.y` (a plain
 `npm install` after editing package.json keeps the `link: true` entry). Peers: each core optional (`peerDependenciesMeta`), `^2.0.0` except
-`-playlist` and `-sounds` at `^2.1.0` (the playlist's `/no-autoinit` entry;
-`pickRenderOptions`, `destroy({ restore })`);
+`-playlist` at `^2.1.0` (its `/no-autoinit` entry) and `-sounds` at `^2.2.0`
+(the 2.2 markup — rows carry only `data-ws-index`, the sounds ride in a
+`[data-ws-sounds]` JSON script — and `mergeEnharmonicKeys`);
 `svelte` `^5.59.0` — only the latest Svelte is supported. `engines.node`
 `>=22.12`. Never edit the core repos from here.
 
@@ -109,7 +110,11 @@ the old instance in its body (`teardown(html)`), not its cleanup — a
 cleanup still reads the OLD `markup` — with `{ restore: true }` when the
 markup is unchanged; a separate dependency-free `$effect` tears down on
 unmount. `ssr.test.ts` checks the server render is byte-identical to
-`renderSounds`; `hydration.test.ts` / `integration.test.ts` use the real core.
+`renderSounds`; `hydration.test.ts` / `integration.test.ts` use the real core
+(the hydration suite also proves its no-warning check is live: server and
+client markup that differ warn `hydration_html_changed`). Tests read a row's
+title from `.ws-title-text` and its sound from the instance's `sounds` (2.2
+rows carry only `data-ws-index`; unrevealed rows aren't in the DOM).
 `NOT_FORWARDED` is empty: the whole surface is forwarded. In the mocked suites
 render lists one at a time (concurrent dynamic imports of a `vi.mock`ed core
 can hand the second component the real module).
@@ -145,7 +150,8 @@ no module shims — don't add any.
   `NOT_IN_DEFAULTS` (`mode`), and `SHARED_CONFIG_KEYS` (identical in all four
   bar wrappers).
 - Proven red by deleting one forward (player `loopLabel`, playlist `volume`,
-  player `onloop`) on 2026-11-21.
+  player `onloop`) on 2026-11-21, and sounds `mergeEnharmonicKeys` on
+  2026-11-22.
 
 ## Conventions
 - Logging prefixes `[WaveformPlayerSvelte]`, `[WaveformBarSvelte]`,

@@ -32,7 +32,9 @@ class MockSounds {
 	opts: Record<string, unknown>;
 	/** The `[data-ws-list]` adopted at construction (null = rendered its own). */
 	adopted: Element | null;
-	/** `data-url` of each adopted row, and whether any arrived already dirty. */
+	/** The url of each adopted row (2.2 rows carry only `data-ws-index`, an
+	 *  index into the markup's `[data-ws-sounds]` JSON, as the runtime reads
+	 *  them), and whether any arrived already dirty. */
 	rowUrls: string[];
 	dirtyOnArrival: boolean;
 	play = vi.fn();
@@ -56,10 +58,13 @@ class MockSounds {
 		let original: string | null = null;
 		if (!this.adopted) {
 			original = el.innerHTML;
-			el.innerHTML = '<ul data-ws-list><li data-ws-index="0" data-url="/from-manifest.mp3"></li></ul>';
+			el.innerHTML =
+				'<ul data-ws-list><li data-ws-index="0"></li></ul>' +
+				'<script type="application/json" data-ws-sounds>[{"url":"/from-manifest.mp3"}]</script>';
 		}
 		const rows = Array.from(el.querySelectorAll<HTMLElement>('[data-ws-list] > [data-ws-index]'));
-		this.rowUrls = rows.map((r) => r.dataset.url ?? '');
+		const data = JSON.parse(el.querySelector('script[data-ws-sounds]')?.textContent || '[]') as Array<{ url: string }>;
+		this.rowUrls = rows.map((r) => data[Number(r.dataset.wsIndex)]?.url ?? '');
 		this.dirtyOnArrival = rows.some((r) => r.classList.contains('is-current'));
 		// What filtering / playback leave behind on the rows.
 		rows.forEach((r) => r.classList.add('is-current'));
@@ -108,7 +113,11 @@ describe('WaveformSounds (Svelte)', () => {
 		expect(el).not.toBeNull();
 		const rows = el.querySelectorAll('[data-ws-list] > [data-ws-index]');
 		expect(rows).toHaveLength(2);
-		expect(rows[1].getAttribute('data-url')).toBe('/loop.mp3');
+		expect(rows[1].querySelector('.ws-title-text')!.textContent).toBe('Loop');
+		// Each sound's data rides once in the core's inert JSON, not on the row.
+		expect(rows[1].getAttribute('data-ws-index')).toBe('1');
+		const data = JSON.parse(el.querySelector('script[type="application/json"][data-ws-sounds]')!.textContent!);
+		expect(data.map((s: { url: string }) => s.url)).toEqual(['/kick.mp3', '/loop.mp3']);
 		// A per-sound `download` renders that row's link; rows without carry none.
 		expect(rows[0].querySelector('a.ws-download[download]')!.getAttribute('href')).toBe('/free/kick.wav');
 		expect(rows[1].querySelector('a.ws-download')).toBeNull();

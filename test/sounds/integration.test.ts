@@ -53,8 +53,14 @@ const sounds = [
 ];
 
 const host = (container: HTMLElement) => container.querySelector('div.wfs-host') as HTMLDivElement;
+/* 2.2 rows exist only while shown and carry only `data-ws-index` (the
+ * sound's index in the instance's `sounds`); a row's data is the instance's. */
 const visibleRows = (el: HTMLElement) =>
 	Array.from(el.querySelectorAll<HTMLElement>('[data-ws-list] > [data-ws-index]')).filter((r) => !r.hidden);
+const visibleUrls = (el: HTMLElement) =>
+	visibleRows(el).map((r) => Core.getInstance(el)!.sounds[Number(r.dataset.wsIndex)].url);
+const visibleTitles = (el: HTMLElement) =>
+	visibleRows(el).map((r) => r.querySelector('.ws-title-text')!.textContent);
 
 afterEach(() => {
 	StubPlayer.instances.length = 0;
@@ -100,7 +106,7 @@ describe('WaveformSounds against the real runtime', () => {
 		await (api.getInstance() as { ready: Promise<void> }).ready;
 
 		api.setFilter({ type: 'Bass' });
-		expect(visibleRows(host(container)).map((r) => r.dataset.url)).toEqual(['/bass.mp3']);
+		expect(visibleUrls(host(container))).toEqual(['/bass.mp3']);
 		const [visible] = onfilter.mock.calls.at(-1)!;
 		expect((visible as Array<{ url: string }>).map((s) => s.url)).toEqual(['/bass.mp3']);
 		expect((onEvent.mock.calls.at(-1)![0] as CustomEvent).detail).toMatchObject({ visible: 1, total: 3 });
@@ -115,7 +121,7 @@ describe('WaveformSounds against the real runtime', () => {
 		const el = host(container);
 
 		api.setSort('title');
-		expect(visibleRows(el).map((r) => r.dataset.title)).toEqual(['Bass', 'Kick', 'Loop']);
+		expect(visibleTitles(el)).toEqual(['Bass', 'Kick', 'Loop']);
 		expect(el.querySelector('[data-ws-menu="sort"] [data-ws-menu-value]')!.textContent).toBe('Name');
 	});
 
@@ -126,7 +132,7 @@ describe('WaveformSounds against the real runtime', () => {
 		await vi.waitFor(() => expect(api.getInstance()).not.toBeNull());
 		await (api.getInstance() as { ready: Promise<void> }).ready;
 
-		expect(visibleRows(host(container)).map((r) => r.dataset.url)).toEqual(['/bass.mp3']);
+		expect(visibleUrls(host(container))).toEqual(['/bass.mp3']);
 		api.setSort('title');
 		// The address is written debounced (replaceState).
 		await vi.waitFor(() => expect(new URL(location.href).searchParams.get('sort')).toBe('title'));

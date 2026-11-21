@@ -85,6 +85,7 @@
 		columns,
 		strings,
 		idPrefix,
+		mergeEnharmonicKeys,
 		// ── Row waveform ─────────────────────────────────────────────────
 		waveformStyle,
 		waveformColor,
@@ -230,6 +231,7 @@
 		set('columns', columns);
 		set('strings', strings);
 		set('idPrefix', prefix);
+		set('mergeEnharmonicKeys', mergeEnharmonicKeys);
 
 		set('waveformStyle', waveformStyle);
 		set('waveformColor', waveformColor);
