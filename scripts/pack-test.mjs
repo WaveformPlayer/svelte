@@ -13,7 +13,11 @@
  *      optional core;
  *   3. the bare package name is not exported.
  *
- * Needs network access (installs from the registry). Usage:
+ * A core whose devDependency is a `file:` path (the sibling 2.0 checkouts,
+ * until 2.0 is on npm) is packed too and installed from its tarball, as
+ * npm would deliver it.
+ *
+ * Needs network access (installs the tools from the registry). Usage:
  *   npm run test:pack            # keeps nothing
  *   KEEP=1 npm run test:pack     # leaves the consumer dirs for inspection
  */
@@ -69,6 +73,21 @@ check('tarball holds dist/, README, LICENSE and package.json only', () => {
 	}
 });
 
+/** Install spec for a core: its tarball when the devDependency is `file:`. */
+const coreSpecs = {};
+for (const sub of ['player', 'bar', 'playlist', 'sounds']) {
+	const name = `@arraypress/waveform-${sub}`;
+	const range = pkg.devDependencies[name];
+	if (range.startsWith('file:')) {
+		const out = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', work, resolve(root, range.slice(5))], root));
+		const r = Array.isArray(out) ? out[0] : (out[name] ?? Object.values(out)[0]);
+		coreSpecs[name] = join(work, r.filename);
+		console.log(`  ${r.filename} (from ${range})`);
+	} else {
+		coreSpecs[name] = `${name}@${range}`;
+	}
+}
+
 const viteConfig = `import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 export default defineConfig({
@@ -92,7 +111,7 @@ function makeConsumer(name, cores) {
 		JSON.stringify({ name, private: true, type: 'module' }, null, 2),
 	);
 	writeFileSync(join(dir, 'vite.config.js'), viteConfig);
-	const deps = [tarball, ...Object.entries({ ...toolDeps, ...cores }).map(([n, v]) => `${n}@${v}`)];
+	const deps = [tarball, ...Object.entries(toolDeps).map(([n, v]) => `${n}@${v}`), ...cores.map((c) => coreSpecs[c])];
 	run('npm', ['install', '--no-audit', '--no-fund', '--loglevel=error', ...deps], dir);
 	return dir;
 }
@@ -115,12 +134,7 @@ const ALL = [
 ];
 
 console.log('\nconsumer with all four cores');
-const full = makeConsumer('consumer-all', {
-	'@arraypress/waveform-player': pkg.devDependencies['@arraypress/waveform-player'],
-	'@arraypress/waveform-bar': pkg.devDependencies['@arraypress/waveform-bar'],
-	'@arraypress/waveform-playlist': pkg.devDependencies['@arraypress/waveform-playlist'],
-	'@arraypress/waveform-sounds': pkg.devDependencies['@arraypress/waveform-sounds'],
-});
+const full = makeConsumer('consumer-all', Object.keys(coreSpecs));
 writeFileSync(join(full, 'src/main.js'), `import { mount } from 'svelte';\n${mountAll(ALL)}\n`);
 /** Every emitted chunk, concatenated. */
 const output = (dir) =>
@@ -137,10 +151,13 @@ writeFileSync(
 import type { WaveformBarConfig, WaveformBarTriggerProps } from '${pkg.name}/bar';
 import type { WaveformPlaylistProps, WaveformPlaylistExpose } from '${pkg.name}/playlist';
 import type { WaveformSoundsProps, WaveformSoundsExpose } from '${pkg.name}/sounds';
-export const p: WaveformPlayerProps = { url: '/a.mp3', waveformStyle: 'bars' };
+import type { ComponentProps } from 'svelte';
+import { WaveformPlayer } from '${pkg.name}/player';
+export const p: WaveformPlayerProps = { url: '/a.mp3', waveformStyle: 'bars', duration: 187, preload: 'none', waveform: 'wp1:AIC_' };
+export const onseek: ComponentProps<typeof WaveformPlayer>['onseek'] = (d) => d.currentTime.toFixed(1);
 export const b: WaveformBarConfig = { persist: true };
 export const t: WaveformBarTriggerProps = { url: '/a.mp3' };
-export const l: WaveformPlaylistProps = { tracks: [{ url: '/a.mp3' }] };
+export const l: WaveformPlaylistProps = { tracks: [{ url: '/a.mp3', duration: '3:45', downloadUrl: '/a.wav' }] };
 export const s: WaveformSoundsProps = { sounds: [] };
 export type E = [WaveformPlayerExpose, WaveformPlaylistExpose, WaveformSoundsExpose];
 `,
@@ -162,9 +179,7 @@ writeFileSync(
 check('tsc resolves every sub-path\'s types', () => run('npx', ['tsc', '-p', '.'], full));
 
 console.log('\nconsumer with ONLY @arraypress/waveform-player');
-const only = makeConsumer('consumer-player-only', {
-	'@arraypress/waveform-player': pkg.devDependencies['@arraypress/waveform-player'],
-});
+const only = makeConsumer('consumer-player-only', ['@arraypress/waveform-player']);
 writeFileSync(join(only, 'src/main.js'), `import { mount } from 'svelte';\n${mountAll([ALL[0]])}\n`);
 check('vite build importing ./player bundles the real core', () => {
 	run('npx', ['vite', 'build'], only);
