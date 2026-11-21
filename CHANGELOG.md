@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 — Unreleased
+## 2.0.0 — 2026-11-21
 
 The four Svelte wrappers are now one package, `@arraypress/waveform-svelte`,
 with one sub-path per component, built for the 2.0 cores.
