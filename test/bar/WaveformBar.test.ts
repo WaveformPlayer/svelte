@@ -134,6 +134,18 @@ describe('WaveformBarTrigger (Svelte)', () => {
 		expect(btn.getAttribute('aria-label')).toBe('Add Song A to queue');
 	});
 
+	it('renders duration as seconds or a clock string, and wp1: peaks verbatim', () => {
+		const { container } = render(WaveformBarTrigger, {
+			props: { url: '/a.mp3', duration: 187, waveform: 'wp1:AIC_' },
+		});
+		const btn = container.querySelector('button')!;
+		expect(btn.getAttribute('data-wb-duration')).toBe('187');
+		expect(btn.getAttribute('data-wb-waveform')).toBe('wp1:AIC_');
+
+		const { container: c2 } = render(WaveformBarTrigger, { props: { url: '/b.mp3', duration: '3:07' } });
+		expect(c2.querySelector('button')!.getAttribute('data-wb-duration')).toBe('3:07');
+	});
+
 	it('JSON-encodes meta / markers arrays', () => {
 		const markers = [{ time: 0, label: 'Intro' }];
 		const { container } = render(WaveformBarTrigger, {

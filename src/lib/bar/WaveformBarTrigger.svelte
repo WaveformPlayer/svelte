@@ -38,10 +38,12 @@
 		album?: string;
 		artwork?: string;
 		link?: string;
+		/** Seconds or a clock string (`'3:07'`); see `WaveformBarTrackData.duration`. */
 		duration?: string | number;
 		bpm?: string | number;
 		musicalKey?: string;
 		meta?: string[];
+		/** Peaks: an array, a `.json` URL or compact `wp1:` peaks. */
 		waveform?: number[] | string;
 		markers?: WaveformBarMarker[];
 		favorited?: boolean;
