@@ -1,0 +1,127 @@
+{
+  "name": "@arraypress/waveform-svelte",
+  "version": "2.0.0-next.0",
+  "description": "Svelte 5 components for WaveformPlayer — the player, the persistent bar, the playlist and the sound list, one sub-path each so you install only the cores you use.",
+  "type": "module",
+  "exports": {
+    "./player": {
+      "types": "./dist/player/index.d.ts",
+      "svelte": "./dist/player/index.js",
+      "default": "./dist/player/index.js"
+    },
+    "./bar": {
+      "types": "./dist/bar/index.d.ts",
+      "svelte": "./dist/bar/index.js",
+      "default": "./dist/bar/index.js"
+    },
+    "./playlist": {
+      "types": "./dist/playlist/index.d.ts",
+      "svelte": "./dist/playlist/index.js",
+      "default": "./dist/playlist/index.js"
+    },
+    "./sounds": {
+      "types": "./dist/sounds/index.d.ts",
+      "svelte": "./dist/sounds/index.js",
+      "default": "./dist/sounds/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "player": ["./dist/player/index.d.ts"],
+      "bar": ["./dist/bar/index.d.ts"],
+      "playlist": ["./dist/playlist/index.d.ts"],
+      "sounds": ["./dist/sounds/index.d.ts"]
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "svelte",
+    "svelte5",
+    "svelte-component",
+    "audio",
+    "player",
+    "waveform",
+    "visualization",
+    "audio-player",
+    "waveform-visualization",
+    "playlist",
+    "queue",
+    "persistent-player",
+    "bottom-bar",
+    "chapters",
+    "podcast-player",
+    "samples",
+    "sound-browser",
+    "media-session"
+  ],
+  "author": "ArrayPress",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WaveformPlayer/svelte.git"
+  },
+  "bugs": {
+    "url": "https://github.com/WaveformPlayer/svelte/issues"
+  },
+  "homepage": "https://waveformplayer.com",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/arraypress"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "peerDependencies": {
+    "@arraypress/waveform-bar": "^1.11.0",
+    "@arraypress/waveform-player": "^1.27.0",
+    "@arraypress/waveform-playlist": "^1.8.0",
+    "@arraypress/waveform-sounds": "^0.2.0 || ^0.3.0",
+    "svelte": "^5.20.0"
+  },
+  "peerDependenciesMeta": {
+    "@arraypress/waveform-bar": { "optional": true },
+    "@arraypress/waveform-player": { "optional": true },
+    "@arraypress/waveform-playlist": { "optional": true },
+    "@arraypress/waveform-sounds": { "optional": true }
+  },
+  "scripts": {
+    "build": "svelte-package",
+    "dev": "svelte-package --watch",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json",
+    "lint": "biome lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:pack": "node scripts/pack-test.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@arraypress/waveform-bar": "^1.12.0",
+    "@arraypress/waveform-player": "^1.29.1",
+    "@arraypress/waveform-playlist": "^1.8.0",
+    "@arraypress/waveform-sounds": "^0.2.0",
+    "@biomejs/biome": "^2.6.8",
+    "@sveltejs/package": "^3.0.3",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@testing-library/jest-dom": "^8.0.0",
+    "@testing-library/svelte": "^5.4.2",
+    "@types/node": "^26.6.6",
+    "jsdom": "^31.0.1",
+    "svelte": "^5.59.1",
+    "svelte-check": "^4.7.8",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  }
+}
