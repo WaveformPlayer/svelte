@@ -8,6 +8,10 @@
  * mocked at the module boundary by its own suites (the sounds suites
  * `integration.test.ts` / `hydration.test.ts` run the REAL core, and
  * `ssr.test.ts` server-renders in the node environment).
+ *
+ * The player / bar / playlist configs passed `svelte({ hot: false })`;
+ * the plugin had already dropped `hot` for Svelte 5 (deleted with a
+ * warning in 5.x, gone in 7.x), so plain `svelte()` is the same setup.
  */
 import { defineConfig } from 'vitest/config';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
