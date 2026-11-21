@@ -33,4 +33,12 @@ describe('peer dependency floors', () => {
 	it('requires waveform-player >= 2.0.0 (the playlist core\'s own floor)', () => {
 		expect(atLeast(pkg.peerDependencies['@arraypress/waveform-player'], '2.0.0')).toBe(true);
 	});
+
+	it('develops against the published 2.0 packages (a ^2.x devDependency at least the peer floor)', () => {
+		for (const name of ['@arraypress/waveform-playlist', '@arraypress/waveform-player'] as const) {
+			const range = pkg.devDependencies[name];
+			expect(floor(range)[0], `${name}@${range} is not a ^2.x range`).toBe(2);
+			expect(atLeast(range, '2.0.0'), `${name}@${range} < 2.0.0`).toBe(true);
+		}
+	});
 });

@@ -9,9 +9,9 @@
  *     2.0 player, both documented on `WaveformBarTrackData`.
  *   - `@arraypress/waveform-player` ≥ 2.0.0 — the bar 2.0's own peer.
  *
- * Dev dependencies are held to the same floors so the tests run against
- * a supported version — or are the sibling checkout (`file:../waveform-*`)
- * while 2.0 is unpublished. Kept identical across the four bar wrappers.
+ * The repo develops against the published 2.0 packages: each devDependency
+ * is a `^2.x` range at least the peer floor, so the tests run against what
+ * a consumer installs. Kept identical across the four bar wrappers.
  */
 import { describe, expect, it } from 'vitest';
 import pkg from '../../package.json';
@@ -50,12 +50,11 @@ describe('package.json — peer floors cover what the wrapper relies on', () => 
 			expect(atLeast(range!, min), `${name}@${range} < ${min}`).toBe(true);
 		});
 
-		it(`devDependencies["${name}"] (if present) is at least ^${min}`, () => {
+		it(`devDependencies["${name}"] is the published ^2.x, at least ^${min}`, () => {
 			const range = deps.devDependencies?.[name];
-			if (range === undefined) return;
-			// The local 2.0 checkout, until it is on npm.
-			if (range === `file:../${name.split('/')[1]}`) return;
-			expect(atLeast(range, min), `${name}@${range} < ${min}`).toBe(true);
+			expect(range, `${name} must be a devDependency`).toBeDefined();
+			expect(caretFloor(range!)[0], `${name}@${range} is not a ^2.x range`).toBe(2);
+			expect(atLeast(range!, min), `${name}@${range} < ${min}`).toBe(true);
 		});
 	}
 });

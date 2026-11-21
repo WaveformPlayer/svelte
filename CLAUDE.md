@@ -13,8 +13,8 @@ a combined entry would make bundlers resolve every core.
 - `npm run lint` — Biome (recommended preset, formatter off; see biome.jsonc).
 - `npm run build` — svelte-package → `dist/` (gitignored). ESM only; there is
   no CommonJS to build.
-- `npm run test:pack` — packs this package (and any `file:` core), installs
-  them into throwaway consumers: a Vite build of every sub-path, tsc over every
+- `npm run test:pack` — packs this package (and any temporary `file:` core),
+  installs them with the cores into throwaway consumers: a Vite build of every sub-path, tsc over every
   sub-path's types, a player-only consumer. Run when touching `exports`,
   `files` or the build.
 
@@ -22,14 +22,19 @@ a combined entry would make bundlers resolve every core.
 `src/lib/<component>/` (component, `types.ts`, `index.ts`) and
 `test/<component>/` (each with its own `setup.ts`, mocks and drift tests).
 
-## Dependencies — the file: devDependencies
-The cores are **`file:../waveform-*` devDependencies** while 2.0 is
-unpublished: npm symlinks the sibling checkouts (branch `ts`), so tests,
-typecheck and the drift tests run against the real 2.0 sources. Because the
-symlinks resolve outside this root, `vitest.config.ts` allows exactly those
-four directories in `server.fs.allow`. Once 2.0 is on npm, switch them to
-`^2.0.0` (the peer-range tests accept either) and drop the `fs.allow`
-entries. Peers: each core `^2.0.0`, optional (`peerDependenciesMeta`);
+## Dependencies
+The cores are **devDependencies at the published `^2.0.0`**, resolved from
+registry.npmjs.org (no `link: true` lock entries, real directories in
+`node_modules`), so tests, typecheck and the drift tests run against what a
+consumer installs. The peer-range tests check each is a `^2.x` range at
+least the peer floor. For cross-repo work before a core release, a
+devDependency can temporarily be `file:../waveform-<name>`: npm symlinks the
+sibling checkout, which resolves outside this root, so add it to a
+`server.fs.allow: ['.', '../waveform-<name>']` in `vitest.config.ts` while it
+lasts (the peer-range tests fail meanwhile). Switch it back and re-resolve
+the lock before publishing: `rm -rf node_modules/@arraypress/waveform-<name>`
+then `npm install --save-dev @arraypress/waveform-<name>@^2.x.y` (a plain
+`npm install` after editing package.json keeps the `link: true` entry). Peers: each core `^2.0.0`, optional (`peerDependenciesMeta`);
 `svelte` `^5.59.0` — only the latest Svelte is supported. `engines.node`
 `>=22.12`. Never edit the core repos from here.
 

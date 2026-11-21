@@ -13,9 +13,10 @@
  *      optional core;
  *   3. the bare package name is not exported.
  *
- * A core whose devDependency is a `file:` path (the sibling 2.0 checkouts,
- * until 2.0 is on npm) is packed too and installed from its tarball, as
- * npm would deliver it.
+ * The cores install from npm at their devDependency range. A core whose
+ * devDependency is temporarily a `file:` path (cross-repo work before a
+ * release) is packed too and installed from its tarball, as npm would
+ * deliver it.
  *
  * Needs network access (installs the tools from the registry). Usage:
  *   npm run test:pack            # keeps nothing

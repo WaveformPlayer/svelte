@@ -27,9 +27,9 @@ import { fileURLToPath } from 'node:url';
 
 /*
  * The core as installed under THIS repo's node_modules — not the path
- * `require.resolve` returns, which is the symlink's target while the
- * devDependency is `file:../waveform-player`: that lies outside the Vite
- * root, where an absolute-path `import()` doesn't resolve.
+ * `require.resolve` returns, which would be the symlink's target if the
+ * devDependency were temporarily `file:../waveform-player`: that lies
+ * outside the Vite root, where an absolute-path `import()` doesn't resolve.
  */
 const coreRoot = join(dirname(fileURLToPath(import.meta.url)), '../../node_modules/@arraypress/waveform-player');
 

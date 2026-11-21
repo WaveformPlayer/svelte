@@ -123,10 +123,10 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@arraypress/waveform-bar": "file:../waveform-bar",
-    "@arraypress/waveform-player": "file:../waveform-player",
-    "@arraypress/waveform-playlist": "file:../waveform-playlist",
-    "@arraypress/waveform-sounds": "file:../waveform-sounds",
+    "@arraypress/waveform-bar": "^2.0.0",
+    "@arraypress/waveform-player": "^2.0.0",
+    "@arraypress/waveform-playlist": "^2.0.0",
+    "@arraypress/waveform-sounds": "^2.0.0",
     "@biomejs/biome": "^2.6.8",
     "@sveltejs/package": "^3.0.3",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",

@@ -35,13 +35,8 @@ export default defineConfig({
 	resolve: {
 		conditions: ['browser'],
 	},
-	// The cores are `file:../waveform-*` devDependencies until 2.0 is on npm:
-	// npm symlinks them, Vite follows the link to the sibling checkout, and
-	// that lies outside this root, which Vite refuses to load from unless
-	// allowed. Only the four sibling cores are.
-	server: {
-		fs: {
-			allow: ['.', ...['player', 'bar', 'playlist', 'sounds'].map((c) => `../waveform-${c}`)],
-		},
-	},
+	// No `server.fs.allow`: the cores are published devDependencies, real
+	// directories under node_modules, inside Vite's default root. A temporary
+	// `file:../waveform-<name>` link for cross-repo work would need
+	// `allow: ['.', '../waveform-<name>']` here while it lasts.
 });
