@@ -4,7 +4,7 @@
  * Public TypeScript types for `@arraypress/waveform-svelte/sounds`.
  *
  * The option surface is owned by the core, `@arraypress/waveform-sounds`,
- * whose hand-written `index.d.ts` is re-exported / derived here rather than
+ * whose generated declarations are re-exported / derived here rather than
  * re-declared — so an option the core adds is typed here without an edit
  * (the runtime forward is NOT automatic; see the component's `$props()`).
  *

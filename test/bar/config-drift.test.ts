@@ -3,12 +3,15 @@
  * test/config-drift.test.ts
  * -------------------------
  *
- * `WaveformBarConfig` is hand-written — `@arraypress/waveform-bar` ships no
- * `.d.ts` — and `config` goes to `window.WaveformBar.init()` verbatim, so
- * nothing else links the type to the bar's real option set. This test
- * parses the bar's `DEFAULTS` object straight out of the installed
- * package (it publishes `src/`) and `WaveformBarConfig` out of
- * `src/lib/bar/types.ts`, and fails when they drift:
+ * `WaveformBarConfig` here is hand-written, and `config` goes to
+ * `window.WaveformBar.init()` verbatim, so nothing at build time links the
+ * type to the bar's real option set. (Bar 2.0 generates its own
+ * `WaveformBarConfig`, but the wrappers keep theirs: the shared key list
+ * below is the family contract.) This test parses the bar's `DEFAULTS`
+ * object straight out of the installed package's TypeScript source
+ * (`src/js/core.ts`, shipped for the declaration maps) and
+ * `WaveformBarConfig` out of `src/lib/bar/types.ts`, and fails when they
+ * drift:
  *
  *   1. every `DEFAULTS` key is typed, or listed in `NOT_TYPED` with a reason;
  *   2. every typed key is in `DEFAULTS`, or listed in `NOT_IN_DEFAULTS`;
@@ -21,7 +24,9 @@
  * against the new release.
  */
 import { describe, expect, it } from 'vitest';
-import coreSource from '@arraypress/waveform-bar/src/js/core.js?raw';
+// A relative node_modules path, not the package specifier: the bar's 2.0
+// `exports` map doesn't expose `src/`.
+import coreSource from '../../node_modules/@arraypress/waveform-bar/src/js/core.ts?raw';
 import typesSource from '../../src/lib/bar/types.ts?raw';
 
 /**
@@ -45,7 +50,6 @@ const NOT_TYPED: Record<string, string> = {
 /** Typed keys that legitimately aren't in the installed bar's `DEFAULTS`. */
 const NOT_IN_DEFAULTS: Record<string, string> = {
 	mode: 'accepted by init() but deliberately not defaulted — derived from waveform/layout there',
-	barRadius: 'waveform-bar 1.12.0+; harmless once the devDependency is bumped past it',
 };
 
 /**
@@ -152,9 +156,9 @@ function topLevelKeys(source: string, marker: RegExp, what: string): string[] {
 	return keys;
 }
 
-/** Keys of the `const DEFAULTS = { … }` object literal in the bar's core.js. */
+/** Keys of the `const DEFAULTS = { … }` object literal in the bar's core.ts. */
 function defaultsKeys(source: string): string[] {
-	return topLevelKeys(source, /\bconst\s+DEFAULTS\s*=\s*\{/, 'const DEFAULTS = {…} in waveform-bar core.js');
+	return topLevelKeys(source, /\bconst\s+DEFAULTS\s*=\s*\{/, 'const DEFAULTS = {…} in waveform-bar core.ts');
 }
 
 /** Property names declared on `interface WaveformBarConfig`. */

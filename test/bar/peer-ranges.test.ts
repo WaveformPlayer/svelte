@@ -4,23 +4,21 @@
  *
  * The peer floors must cover everything the wrapper types and relies on:
  *
- *   - `@arraypress/waveform-bar` ≥ 1.11.0 — the newest *required* config
- *     key in `WaveformBarConfig`, `crossOrigin`, arrived in bar 1.11.0.
- *     (`barRadius` and a working `showTime: false` need bar 1.12.0, but
- *     they're optional and older bars simply ignore them, so they're
- *     documented on the type instead of raising the floor.)
- *   - `@arraypress/waveform-player` ≥ 1.8.0 — the bar drives
- *     `audioMode: 'external'` players, which crashed before core 1.8.0.
+ *   - `@arraypress/waveform-bar` ≥ 2.0.0 — the bar that passes a track's
+ *     `duration` (seconds or a clock string) and `wp1:` peaks to the
+ *     2.0 player, both documented on `WaveformBarTrackData`.
+ *   - `@arraypress/waveform-player` ≥ 2.0.0 — the bar 2.0's own peer.
  *
  * Dev dependencies are held to the same floors so the tests run against
- * a supported version. Kept identical across the four bar wrappers.
+ * a supported version — or are the sibling checkout (`file:../waveform-*`)
+ * while 2.0 is unpublished. Kept identical across the four bar wrappers.
  */
 import { describe, expect, it } from 'vitest';
 import pkg from '../../package.json';
 
 const MIN_FLOORS: Record<string, string> = {
-	'@arraypress/waveform-bar': '1.11.0',
-	'@arraypress/waveform-player': '1.8.0',
+	'@arraypress/waveform-bar': '2.0.0',
+	'@arraypress/waveform-player': '2.0.0',
 };
 
 /** Lower bound of a `^x.y.z` range as a comparable tuple. */
@@ -55,6 +53,8 @@ describe('package.json — peer floors cover what the wrapper relies on', () => 
 		it(`devDependencies["${name}"] (if present) is at least ^${min}`, () => {
 			const range = deps.devDependencies?.[name];
 			if (range === undefined) return;
+			// The local 2.0 checkout, until it is on npm.
+			if (range === `file:../${name.split('/')[1]}`) return;
 			expect(atLeast(range, min), `${name}@${range} < ${min}`).toBe(true);
 		});
 	}

@@ -325,6 +325,94 @@ describe('WaveformPlayer (Svelte)', () => {
 		);
 	});
 
+	/* The 13 options new in core 2.0. Typed for free, forwarded by hand. */
+	const OPTIONS_2_0: Record<string, unknown> = {
+		duration: 187,
+		lazy: true,
+		loop: true,
+		showLoop: true,
+		loopLabel: 'Boucle',
+		showVolume: true,
+		volume: 0.5,
+		volumeLabel: 'Lautstärke',
+		muteLabel: 'Stumm',
+		showDownload: true,
+		downloadUrl: '/full/a.wav',
+		downloadName: 'A (full).wav',
+		downloadLabel: 'Herunterladen',
+	};
+
+	it('forwards each 2.0 option when set (and never spreads it onto the host)', async () => {
+		const { container } = render(WaveformPlayer, { props: { url: '/a.mp3', ...OPTIONS_2_0 } });
+		await firstInstance();
+		expect(instances[0].opts).toMatchObject(OPTIONS_2_0);
+		const host = container.querySelector('div.wfp-host') as HTMLDivElement;
+		for (const key of Object.keys(OPTIONS_2_0)) expect(host.hasAttribute(key), key).toBe(false);
+	});
+
+	it('forwards false / 0 for the 2.0 options (an explicit off, not "unset")', async () => {
+		render(WaveformPlayer, {
+			props: { url: '/a.mp3', lazy: false, loop: false, showLoop: false, showVolume: false, showDownload: false, volume: 0 },
+		});
+		await firstInstance();
+		expect(instances[0].opts).toMatchObject({
+			lazy: false,
+			loop: false,
+			showLoop: false,
+			showVolume: false,
+			showDownload: false,
+			volume: 0,
+		});
+	});
+
+	it('omits each 2.0 option when unset, so the core defaults apply', async () => {
+		render(WaveformPlayer, { props: { url: '/a.mp3' } });
+		await firstInstance();
+		for (const key of Object.keys(OPTIONS_2_0)) expect(key in instances[0].opts, key).toBe(false);
+	});
+
+	it('passes compact wp1: peaks through as the waveform option', async () => {
+		render(WaveformPlayer, { props: { url: '/a.mp3', waveform: 'wp1:AIC_' } });
+		await firstInstance();
+		expect(instances[0].opts.waveform).toBe('wp1:AIC_');
+	});
+
+	/* Per-track options follow the url: a url change remounts the player
+	 * (never `loadTrack()`), so the new instance gets the new track's
+	 * duration / download target — and none of the old one's. */
+	it('hands a new url its own duration and download target', async () => {
+		const { component } = render(Harness, {
+			props: { initial: { url: '/a.mp3', duration: 60, downloadUrl: '/a.wav', downloadName: 'a.wav' } },
+		});
+		await firstInstance();
+		flushSync(() =>
+			component.update({ url: '/b.mp3', duration: 125, downloadUrl: '/b.wav', downloadName: 'b.wav' })
+		);
+		await vi.waitFor(() => expect(instances.length).toBe(2));
+		expect(instances[0].destroy).toHaveBeenCalledTimes(1);
+		expect(instances[1].opts).toMatchObject({
+			url: '/b.mp3',
+			duration: 125,
+			downloadUrl: '/b.wav',
+			downloadName: 'b.wav',
+		});
+	});
+
+	it('drops the previous track\'s duration and download target when the new url has none', async () => {
+		const { component } = render(Harness, {
+			props: { initial: { url: '/a.mp3', duration: 60, downloadUrl: '/a.wav', downloadName: 'a.wav' } },
+		});
+		await firstInstance();
+		flushSync(() =>
+			component.update({ url: '/b.mp3', duration: undefined, downloadUrl: undefined, downloadName: undefined })
+		);
+		await vi.waitFor(() => expect(instances.length).toBe(2));
+		expect(instances[1].opts.url).toBe('/b.mp3');
+		expect('duration' in instances[1].opts).toBe(false);
+		expect('downloadUrl' in instances[1].opts).toBe(false);
+		expect('downloadName' in instances[1].opts).toBe(false);
+	});
+
 	it('treats style as inline CSS on the host, never as the core waveformStyle alias', async () => {
 		const { container } = render(WaveformPlayer, {
 			props: { url: '/a.mp3', style: 'min-height: 64px' },

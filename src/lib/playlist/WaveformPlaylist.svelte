@@ -61,12 +61,18 @@
 	};
 	type PlaylistCtor = new (el: HTMLElement, opts: Record<string, unknown>) => PlaylistInstance;
 
-	/* `audioMode` is not a prop (the playlist always owns its audio), but
-	 * it is declared `never` here so a stray one is destructured and
-	 * swallowed below instead of landing on the host `<div>` via `...rest`. */
+	/* Player options the playlist never passes to its player (`audioMode`,
+	 * `loop`, `showLoop`, `lazy`) and the per-track ones each `tracks` entry
+	 * supplies (`duration`, `downloadUrl`, `downloadName`) are not props, but
+	 * they are declared `never` here so a stray one is destructured and
+	 * swallowed below instead of landing on the host `<div>` via `...rest`.
+	 * The lowercase callback props replace the host's same-named native
+	 * handlers (`onplay`, `onload`, … are media/resource events, never fired
+	 * on a `<div>`), so their types don't intersect. */
+	type Swallowed = 'audioMode' | 'loop' | 'showLoop' | 'lazy' | 'duration' | 'downloadUrl' | 'downloadName';
 	type Props = WaveformPlaylistProps &
 		WaveformPlaylistCallbacks &
-		HTMLAttributes<HTMLDivElement> & { audioMode?: never };
+		Omit<HTMLAttributes<HTMLDivElement>, keyof WaveformPlaylistCallbacks> & { [K in Swallowed]?: never };
 
 	let {
 		// ── Tracks (rendered into [data-track] markup, not options) ────
@@ -85,10 +91,22 @@
 		density,
 		coverPosition,
 		barPosition,
-		// ── Audio source (forwarded to the embedded player) ────────────
-		// Swallowed, never forwarded: an `'external'` embedded player would
-		// dispatch request-play events nobody answers (1.8.0 ignores it).
+		// ── Swallowed, never forwarded ─────────────────────────────────
+		// The playlist core strips these four itself: an `'external'`
+		// embedded player would dispatch request-play events nobody answers,
+		// a looping track never fires `ended` (so `continuous` stops),
+		// `showLoop`'s button turns that loop on, and `lazy` would only defer
+		// the playlist's own player.
 		audioMode: _audioMode,
+		loop: _loop,
+		showLoop: _showLoop,
+		lazy: _lazy,
+		// Per-track: set on each `tracks` entry (rendered as data-*), which
+		// the playlist reads; it ignores them as playlist-wide options.
+		duration: _duration,
+		downloadUrl: _downloadUrl,
+		downloadName: _downloadName,
+		// ── Audio source (forwarded to the embedded player) ────────────
 		preload,
 		crossOrigin,
 		// ── Waveform visualisation ─────────────────────────────────────
@@ -108,6 +126,10 @@
 		playbackRate,
 		showPlaybackSpeed,
 		playbackRates,
+		// ── Volume + download (2.0; the download target is per-track) ──
+		showVolume,
+		volume,
+		showDownload,
 		// ── UI toggles ─────────────────────────────────────────────────
 		showControls,
 		showInfo,
@@ -126,6 +148,10 @@
 		seekValueText,
 		playPauseLabel,
 		speedLabel,
+		loopLabel,
+		volumeLabel,
+		muteLabel,
+		downloadLabel,
 		// ── Metadata / text ────────────────────────────────────────────
 		artworkAlt,
 		unknownTrackText,
@@ -232,8 +258,8 @@
 		set('coverPosition', coverPosition);
 		set('barPosition', barPosition);
 
-		/* Pass-through player options (`audioMode` deliberately absent —
-		 * the playlist always owns its audio). */
+		/* Pass-through player options (`audioMode`, `loop`, `showLoop` and
+		 * `lazy` deliberately absent — see the destructure above). */
 		set('preload', preload);
 		set('crossOrigin', crossOrigin);
 
@@ -254,6 +280,10 @@
 		set('showPlaybackSpeed', showPlaybackSpeed);
 		set('playbackRates', playbackRates);
 
+		set('showVolume', showVolume);
+		set('volume', volume);
+		set('showDownload', showDownload);
+
 		set('showControls', showControls);
 		set('showInfo', showInfo);
 		set('showTime', showTime);
@@ -271,6 +301,10 @@
 		set('seekValueText', seekValueText);
 		set('playPauseLabel', playPauseLabel);
 		set('speedLabel', speedLabel);
+		set('loopLabel', loopLabel);
+		set('volumeLabel', volumeLabel);
+		set('muteLabel', muteLabel);
+		set('downloadLabel', downloadLabel);
 
 		set('artworkAlt', artworkAlt);
 		set('unknownTrackText', unknownTrackText);
@@ -324,7 +358,7 @@
 					return;
 				}
 
-				/* Wire callbacks. The playlist (1.8.0+) runs each after its own
+				/* Wire callbacks. The playlist runs each after its own
 				 * handling, passing the core's arguments through. The lowercase
 				 * props are reactive and read at call time, so the closures
 				 * always reach the latest handler without a remount. */
@@ -408,7 +442,9 @@
 			data-artist={track.artist}
 			data-artwork={track.artwork}
 			data-album={track.album}
-			data-duration={track.duration}
+			data-duration={track.duration === undefined ? undefined : String(track.duration)}
+			data-download-url={track.downloadUrl}
+			data-download-name={track.downloadName}
 			data-markers={track.markers ? JSON.stringify(track.markers) : undefined}
 			data-waveform={Array.isArray(track.waveform) ? JSON.stringify(track.waveform) : track.waveform}
 		>

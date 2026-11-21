@@ -3,11 +3,13 @@
  * ------------------------
  *
  * The peer floors are load-bearing, not cosmetic.
- * `@arraypress/waveform-sounds@0.1.0` is the first release (and the first
- * with the `/render` + `/no-autoinit` subpaths this wrapper imports);
- * it in turn needs `@arraypress/waveform-player@1.24.5` as its engine.
- * Also guards the local-dev devDependency: `file:../waveform-sounds` is
- * fine in the repo but must never reach `peerDependencies`.
+ * `@arraypress/waveform-sounds@2.0.0` is the release whose option types
+ * live in `types/types.d.ts` (the drift test reads them) and which passes
+ * each sound's `duration` to its engine; it in turn needs
+ * `@arraypress/waveform-player@2.0.0`. (The `/render` + `/no-autoinit`
+ * subpaths this wrapper imports date from 0.1.0.) Also guards the local-dev
+ * devDependency: `file:../waveform-sounds` is fine in the repo but must
+ * never reach `peerDependencies`.
  */
 import { describe, it, expect } from 'vitest';
 import pkg from '../../package.json';
@@ -29,12 +31,12 @@ const atLeast = (range: string, min: string): boolean => {
 };
 
 describe('peer dependency floors', () => {
-	it('requires waveform-sounds >= 0.1.0 (the /render and /no-autoinit subpaths)', () => {
-		expect(atLeast(pkg.peerDependencies['@arraypress/waveform-sounds'], '0.1.0')).toBe(true);
+	it('requires waveform-sounds >= 2.0.0 (generated types, per-sound duration)', () => {
+		expect(atLeast(pkg.peerDependencies['@arraypress/waveform-sounds'], '2.0.0')).toBe(true);
 	});
 
-	it("requires waveform-player >= 1.24.5 (the sounds core's own floor)", () => {
-		expect(atLeast(pkg.peerDependencies['@arraypress/waveform-player'], '1.24.5')).toBe(true);
+	it("requires waveform-player >= 2.0.0 (the sounds core's own floor)", () => {
+		expect(atLeast(pkg.peerDependencies['@arraypress/waveform-player'], '2.0.0')).toBe(true);
 	});
 
 	it('requires Svelte >= 5.20.0 ($props.id(), the SSR-stable id prefix)', () => {

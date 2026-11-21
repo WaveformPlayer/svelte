@@ -9,7 +9,7 @@
  * `crossOrigin` went missing from all four playlist wrappers for two weeks.
  *
  * Every key of `WaveformSoundsOptions` (read from the installed core's
- * `index.d.ts`, see `option-surface.ts`) must either be forwarded — and
+ * `types/types.d.ts`, see `option-surface.ts`) must either be forwarded — and
  * rebuild the list when it changes — or be listed in `NOT_FORWARDED` with
  * the reason. Callback options map to the lowercase Svelte prop
  * (`onFilter` → `onfilter`). Adding an option to the core without deciding

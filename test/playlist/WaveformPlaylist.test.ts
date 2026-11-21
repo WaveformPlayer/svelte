@@ -22,7 +22,7 @@ const lifecycle: string[] = [];
 
 /**
  * Stand-in for the core class. Models the library's DOM contract
- * (playlist 1.8.0): parse the [data-track] children, hide them and append
+ * (playlist 1.8.0 and later): parse the [data-track] children, hide them and append
  * generated UI; destroy() removes only what it generated and un-hides the
  * tracks in place.
  */
@@ -120,6 +120,58 @@ describe('WaveformPlaylist (Svelte)', () => {
 		expect(a.getAttribute('data-waveform')).toBe(JSON.stringify(peaks));
 		expect(b.getAttribute('data-waveform')).toBe('/peaks/b.json');
 		expect(c.hasAttribute('data-waveform')).toBe(false);
+	});
+
+	it('passes compact wp1: peaks through verbatim', () => {
+		const { container } = render(WaveformPlaylist, {
+			props: { tracks: [{ url: '/a.mp3', waveform: 'wp1:AIC_' }] },
+		});
+		expect(container.querySelector('[data-track]')!.getAttribute('data-waveform')).toBe('wp1:AIC_');
+	});
+
+	it('renders a track duration as data-duration, in seconds or as a clock string', () => {
+		const { container } = render(WaveformPlaylist, {
+			props: {
+				tracks: [{ url: '/a.mp3', duration: 225 }, { url: '/b.mp3', duration: '3:45' }, { url: '/c.mp3' }],
+			},
+		});
+		const [a, b, c] = Array.from(container.querySelectorAll('[data-track]'));
+		expect(a.getAttribute('data-duration')).toBe('225');
+		expect(b.getAttribute('data-duration')).toBe('3:45');
+		expect(c.hasAttribute('data-duration')).toBe(false);
+	});
+
+	it('renders the per-track download target as data-download-url / data-download-name', () => {
+		const { container } = render(WaveformPlaylist, {
+			props: {
+				tracks: [
+					{ url: '/a.mp3', downloadUrl: '/full/a.wav', downloadName: 'A (full).wav' },
+					{ url: '/b.mp3' },
+				],
+			},
+		});
+		const [a, b] = Array.from(container.querySelectorAll('[data-track]'));
+		expect(a.getAttribute('data-download-url')).toBe('/full/a.wav');
+		expect(a.getAttribute('data-download-name')).toBe('A (full).wav');
+		expect(b.hasAttribute('data-download-url')).toBe(false);
+		expect(b.hasAttribute('data-download-name')).toBe(false);
+	});
+
+	it('re-mounts with the new markup when a track duration or download target changes', async () => {
+		const { component, container } = render(Harness, {
+			props: { initial: { tracks: [{ url: '/a.mp3', duration: 60, downloadUrl: '/a.wav' }] } },
+		});
+		await firstInstance();
+		(component as unknown as { set: (k: string, v: unknown) => void }).set('tracks', [
+			{ url: '/b.mp3', duration: '2:05', downloadUrl: '/b.wav', downloadName: 'b.wav' },
+		]);
+		flushSync();
+		await vi.waitFor(() => expect(instances).toHaveLength(2));
+		const track = container.querySelector('[data-track]')!;
+		expect(instances[1].parsedUrls).toEqual(['/b.mp3']);
+		expect(track.getAttribute('data-duration')).toBe('2:05');
+		expect(track.getAttribute('data-download-url')).toBe('/b.wav');
+		expect(track.getAttribute('data-download-name')).toBe('b.wav');
 	});
 
 	it('constructs the core instance over the host', async () => {
@@ -227,6 +279,69 @@ describe('WaveformPlaylist (Svelte)', () => {
 		await firstInstance();
 		expect('audioMode' in instances[0].opts).toBe(false);
 		expect(container.querySelector('div.wfp-host')!.hasAttribute('audiomode')).toBe(false);
+	});
+
+	it('forwards the 2.0 volume / download options and the control labels', async () => {
+		render(WaveformPlaylist, {
+			props: {
+				tracks: tracksA,
+				showVolume: true,
+				volume: 0.5,
+				showDownload: true,
+				loopLabel: 'Boucle',
+				volumeLabel: 'Lautstärke',
+				muteLabel: 'Stumm',
+				downloadLabel: 'Herunterladen',
+			},
+		});
+		await firstInstance();
+		expect(instances[0].opts).toMatchObject({
+			showVolume: true,
+			volume: 0.5,
+			showDownload: true,
+			loopLabel: 'Boucle',
+			volumeLabel: 'Lautstärke',
+			muteLabel: 'Stumm',
+			downloadLabel: 'Herunterladen',
+		});
+	});
+
+	it('omits the 2.0 volume / download options when unset', async () => {
+		render(WaveformPlaylist, { props: { tracks: tracksA } });
+		await firstInstance();
+		for (const key of ['showVolume', 'volume', 'showDownload', 'loopLabel', 'volumeLabel', 'muteLabel', 'downloadLabel']) {
+			expect(key in instances[0].opts, key).toBe(false);
+		}
+	});
+
+	it('swallows loop, showLoop, lazy and the per-track options: not forwarded, not on the host', async () => {
+		// The playlist core strips loop / showLoop / lazy itself (a looping
+		// track never ends, which stops `continuous`), and duration /
+		// downloadUrl / downloadName belong on each track.
+		const { container } = render(WaveformPlaylist, {
+			props: {
+				tracks: tracksA,
+				// Not playlist props (typed `never`), so each is a type error:
+				// @ts-expect-error
+				loop: true,
+				// @ts-expect-error
+				showLoop: true,
+				// @ts-expect-error
+				lazy: true,
+				// @ts-expect-error
+				duration: 60,
+				// @ts-expect-error
+				downloadUrl: '/x.wav',
+				// @ts-expect-error
+				downloadName: 'x.wav',
+			},
+		});
+		await firstInstance();
+		const host = container.querySelector('div.wfp-host')!;
+		for (const key of ['loop', 'showLoop', 'lazy', 'duration', 'downloadUrl', 'downloadName']) {
+			expect(key in instances[0].opts, key).toBe(false);
+			expect(host.hasAttribute(key.toLowerCase()), key).toBe(false);
+		}
 	});
 
 	it('omits absent props so the core defaults win', async () => {

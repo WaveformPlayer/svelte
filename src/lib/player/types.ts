@@ -7,9 +7,9 @@
  * `AudioMode`, `AudioPreload`, `ButtonAlign`, `WaveformMarker`,
  * `WaveformPeaks`, and the full per-option list behind
  * `WaveformPlayerProps` — is owned by the core library and re-exported
- * / extended here rather than re-declared. The core's hand-authored
- * `index.d.ts` is the single source of truth, so these types can never
- * drift out of sync with it.
+ * / extended here rather than re-declared. The core's declarations are
+ * generated from its TypeScript source and are the single source of
+ * truth, so these types can never drift out of sync with it.
  *
  * This module only adds the Svelte-specific surface:
  *
@@ -48,7 +48,17 @@ export type {
  *
  * Derived from the core library's `WaveformPlayerOptions` so every
  * library option is a typed prop automatically and stays in sync as
- * the core evolves. Two groups of core options are removed:
+ * the core evolves.
+ *
+ * `waveform` takes pre-computed peaks as an array, a `.json` peaks URL, a
+ * JSON string, or compact `wp1:` peaks — `"wp1:"` + base64url (no padding)
+ * of one byte per peak, as `@arraypress/waveform-gen` writes them, about a
+ * quarter the size of a JSON array. `duration` (seconds) gives the total
+ * time before the audio loads, so a `preload: 'none'` player shows its
+ * length with no audio request. Both are per-track: changing `url`
+ * remounts the player with the new values.
+ *
+ * Two groups of core options are removed:
  *
  *  - the callbacks — lowercase Svelte callback props (`onload`,
  *    `onplay`, `onnexttrack`, …) cover those (see

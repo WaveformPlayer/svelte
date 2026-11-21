@@ -3,8 +3,9 @@
  * ----------------------
  *
  * The option surface this wrapper has to cover: every key of the core's
- * `WaveformSoundsOptions`, read from its hand-written `index.d.ts` as
- * installed in `node_modules`.
+ * `WaveformSoundsOptions`, read from its GENERATED `types/types.d.ts` (2.0
+ * dropped the hand-written root `index.d.ts`) as installed in
+ * `node_modules`.
  *
  * The forwarding-drift test checks each key is either forwarded at runtime
  * or listed in its `NOT_FORWARDED` map with a reason, so a core option the
@@ -12,8 +13,8 @@
  * silently dropped.
  */
 // The installed core's declaration file, as text. A relative path (not the
-// package specifier) because the core doesn't export `./index.d.ts`.
-import soundsDts from '../../node_modules/@arraypress/waveform-sounds/index.d.ts?raw';
+// package specifier) because the core's `exports` map doesn't expose `types/`.
+import soundsDts from '../../node_modules/@arraypress/waveform-sounds/types/types.d.ts?raw';
 
 /**
  * The property names declared directly on `export interface <name>` —

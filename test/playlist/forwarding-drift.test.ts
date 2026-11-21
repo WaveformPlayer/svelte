@@ -10,7 +10,7 @@
  * `artworkPosition` went missing.
  *
  * Every key of `WaveformPlaylistOptions` and `WaveformPlayerOptions` (read
- * from the installed cores' `index.d.ts`, see `option-surface.ts`) must
+ * from the installed cores' `types/types.d.ts`, see `option-surface.ts`) must
  * either be forwarded — and re-mount the playlist when it changes — or be
  * listed in `NOT_FORWARDED` with the reason. Callback options map to the
  * lowercase Svelte prop (`onTimeUpdate` → `ontimeupdate`). Adding an option
@@ -28,7 +28,8 @@ import { ALL_OPTIONS, PLAYER_OPTIONS, PLAYLIST_OPTIONS, isCallback } from './opt
  * embedded player).
  */
 const NOT_FORWARDED: Record<string, string> = {
-	// Per-track content — rendered on each [data-track] from `tracks`.
+	// Per-track content — rendered on each [data-track] from `tracks`
+	// (the playlist's PER_TRACK_OPTIONS; it ignores them on the container).
 	url: "per-track: the track element's data-url",
 	src: 'alias of url; per-track',
 	title: 'per-track: data-title',
@@ -36,11 +37,17 @@ const NOT_FORWARDED: Record<string, string> = {
 	artwork: 'per-track: data-artwork',
 	album: 'per-track: data-album',
 	markers: 'per-track: data-markers',
-	waveform: 'per-track: data-waveform',
+	waveform: 'per-track: data-waveform (an array, a peaks URL or wp1: compact peaks)',
+	duration: "per-track: data-duration (seconds or '3:45'), the playlist's durationSeconds",
+	downloadUrl: 'per-track: data-download-url',
+	downloadName: 'per-track: data-download-name',
 	// Aliases / collisions.
 	style: "alias of waveformStyle; `style` is the host div's inline CSS here",
-	// Owned by the playlist.
-	audioMode: 'the playlist always owns its audio (1.8.0 ignores the option)',
+	// Stripped by the playlist core (its NOT_FORWARDED), from options and data-*.
+	audioMode: 'the playlist always owns its audio',
+	loop: 'a looping track never fires ended, which ends continuous auto-advance',
+	showLoop: "its button turns that same loop on (the track would repeat forever)",
+	lazy: "would only defer the playlist's own player, which it loads itself",
 };
 
 const FORWARDED = ALL_OPTIONS.filter((key) => !(key in NOT_FORWARDED));

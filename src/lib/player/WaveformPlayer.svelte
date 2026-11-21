@@ -50,6 +50,8 @@
 		audioMode,
 		preload,
 		crossOrigin,
+		lazy,
+		duration,
 		// ── Waveform visualisation ─────────────────────────────────────
 		waveformStyle,
 		height,
@@ -67,6 +69,16 @@
 		playbackRate,
 		showPlaybackSpeed,
 		playbackRates,
+		// ── Looping (self mode) ────────────────────────────────────────
+		loop,
+		showLoop,
+		// ── Volume (self mode) ─────────────────────────────────────────
+		showVolume,
+		volume,
+		// ── Download link ──────────────────────────────────────────────
+		showDownload,
+		downloadUrl,
+		downloadName,
 		// ── UI toggles ─────────────────────────────────────────────────
 		showControls,
 		showInfo,
@@ -86,6 +98,10 @@
 		seekValueText,
 		playPauseLabel,
 		speedLabel,
+		loopLabel,
+		volumeLabel,
+		muteLabel,
+		downloadLabel,
 		// ── Error UI ───────────────────────────────────────────────────
 		errorText,
 		unknownTrackText,
@@ -200,6 +216,12 @@
 		set('audioMode', audioMode);
 		set('preload', preload);
 		set('crossOrigin', crossOrigin);
+		set('lazy', lazy);
+		/* Per-track: `duration`, `downloadUrl` and `downloadName` describe the
+		 * track at `url`. A `url` change remounts the player (it never goes
+		 * through `loadTrack()`), so they always arrive with the url they
+		 * belong to, and an unset one is simply absent from the new player. */
+		set('duration', duration);
 
 		set('waveformStyle', waveformStyle);
 		set('height', height);
@@ -217,6 +239,14 @@
 		set('playbackRate', playbackRate);
 		set('showPlaybackSpeed', showPlaybackSpeed);
 		set('playbackRates', playbackRates);
+
+		set('loop', loop);
+		set('showLoop', showLoop);
+		set('showVolume', showVolume);
+		set('volume', volume);
+		set('showDownload', showDownload);
+		set('downloadUrl', downloadUrl);
+		set('downloadName', downloadName);
 
 		set('showControls', showControls);
 		set('showInfo', showInfo);
@@ -236,6 +266,10 @@
 		set('seekValueText', seekValueText);
 		set('playPauseLabel', playPauseLabel);
 		set('speedLabel', speedLabel);
+		set('loopLabel', loopLabel);
+		set('volumeLabel', volumeLabel);
+		set('muteLabel', muteLabel);
+		set('downloadLabel', downloadLabel);
 
 		set('errorText', errorText);
 		set('unknownTrackText', unknownTrackText);
