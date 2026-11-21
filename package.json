@@ -1,6 +1,6 @@
 {
   "name": "@arraypress/waveform-svelte",
-  "version": "2.0.0-next.0",
+  "version": "2.0.0",
   "description": "Svelte 5 components for WaveformPlayer — the player, the persistent bar, the playlist and the sound list, one sub-path each so you install only the cores you use.",
   "type": "module",
   "exports": {
@@ -28,10 +28,18 @@
   },
   "typesVersions": {
     "*": {
-      "player": ["./dist/player/index.d.ts"],
-      "bar": ["./dist/bar/index.d.ts"],
-      "playlist": ["./dist/playlist/index.d.ts"],
-      "sounds": ["./dist/sounds/index.d.ts"]
+      "player": [
+        "./dist/player/index.d.ts"
+      ],
+      "bar": [
+        "./dist/bar/index.d.ts"
+      ],
+      "playlist": [
+        "./dist/playlist/index.d.ts"
+      ],
+      "sounds": [
+        "./dist/sounds/index.d.ts"
+      ]
     }
   },
   "files": [
@@ -91,10 +99,18 @@
     "svelte": "^5.20.0"
   },
   "peerDependenciesMeta": {
-    "@arraypress/waveform-bar": { "optional": true },
-    "@arraypress/waveform-player": { "optional": true },
-    "@arraypress/waveform-playlist": { "optional": true },
-    "@arraypress/waveform-sounds": { "optional": true }
+    "@arraypress/waveform-bar": {
+      "optional": true
+    },
+    "@arraypress/waveform-player": {
+      "optional": true
+    },
+    "@arraypress/waveform-playlist": {
+      "optional": true
+    },
+    "@arraypress/waveform-sounds": {
+      "optional": true
+    }
   },
   "scripts": {
     "build": "svelte-package",
