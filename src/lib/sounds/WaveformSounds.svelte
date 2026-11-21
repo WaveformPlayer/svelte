@@ -110,7 +110,7 @@
 	 * option ids). The core's own default is a hash of the sounds, so two
 	 * lists of the same sounds on a page would collide; `$props.id()` is
 	 * unique per component instance AND identical on the server and during
-	 * hydration (Svelte >= 5.20.0, hence the peer floor). Precedence: the
+	 * hydration (since Svelte 5.20.0; the peer floor is 5.59.0). Precedence: the
 	 * `idPrefix` prop, then the host's `id` (the core's client default),
 	 * then the component id.
 	 */
